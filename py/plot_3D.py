@@ -13,41 +13,41 @@ z24=2.4
 cosmo24 = cCAMB.Cosmology(z24)
 th24 = tP3D.TheoryLyaP3D(cosmo24)
 p24 = th24.FluxP3D_hMpc(z24,k,0)
-p24_UV_only = th24.FluxP3D_hMpc(z24,k,0,linear=True) 
-p24_NLC_only = th24.FluxP3D_hMpc(z24,k,0,uv=False)
-p24_noUV_noNLC = th24.FluxP3D_hMpc(z24,k,0,linear=True,uv=False)
+#p24_UV_only = th24.FluxP3D_hMpc(z24,k,0,linear=True) 
+#p24_NLC_only = th24.FluxP3D_hMpc(z24,k,0,uv=False)
+#p24_noUV_noNLC = th24.FluxP3D_hMpc(z24,k,0,linear=True,uv=False)
 
 z26=2.6
 cosmo26 = cCAMB.Cosmology(z26)
 th26 = tP3D.TheoryLyaP3D(cosmo26)
 p26 = th26.FluxP3D_hMpc(z26,k,0) 
-p26_UV_only = th26.FluxP3D_hMpc(z26,k,0,linear=True) 
-p26_NLC_only = th26.FluxP3D_hMpc(z26,k,0,uv=False)
-p26_noUV_noNLC = th26.FluxP3D_hMpc(z26,k,0,linear=True,uv=False)
+#p26_UV_only = th26.FluxP3D_hMpc(z26,k,0,linear=True) 
+#p26_NLC_only = th26.FluxP3D_hMpc(z26,k,0,uv=False)
+#p26_noUV_noNLC = th26.FluxP3D_hMpc(z26,k,0,linear=True,uv=False)
 
 z28=2.8
 cosmo28 = cCAMB.Cosmology(z28)
 th28 = tP3D.TheoryLyaP3D(cosmo28)
 p28 = th28.FluxP3D_hMpc(z28,k,0) 
-p28_UV_only = th28.FluxP3D_hMpc(z28,k,0,linear=True) 
-p28_NLC_only = th28.FluxP3D_hMpc(z28,k,0,uv=False)
-p28_noUV_noNLC = th28.FluxP3D_hMpc(z28,k,0,linear=True,uv=False)
+#p28_UV_only = th28.FluxP3D_hMpc(z28,k,0,linear=True) 
+#p28_NLC_only = th28.FluxP3D_hMpc(z28,k,0,uv=False)
+#p28_noUV_noNLC = th28.FluxP3D_hMpc(z28,k,0,linear=True,uv=False)
 
 z30=3.0
 cosmo30 = cCAMB.Cosmology(z30)
 th30 = tP3D.TheoryLyaP3D(cosmo30)
 p30 = th30.FluxP3D_hMpc(z30,k,0) 
-p30_UV_only = th30.FluxP3D_hMpc(z30,k,0,linear=True) 
-p30_NLC_only = th30.FluxP3D_hMpc(z30,k,0,uv=False)
-p30_noUV_noNLC = th30.FluxP3D_hMpc(z30,k,0,linear=True,uv=False)
+#p30_UV_only = th30.FluxP3D_hMpc(z30,k,0,linear=True) 
+#p30_NLC_only = th30.FluxP3D_hMpc(z30,k,0,uv=False)
+#p30_noUV_noNLC = th30.FluxP3D_hMpc(z30,k,0,linear=True,uv=False)
 
 z22=2.2
 cosmo22 = cCAMB.Cosmology(z22)
 th22 = tP3D.TheoryLyaP3D(cosmo22)
 p22 = th22.FluxP3D_hMpc(z22,k,0) 
-p22_UV_only = th22.FluxP3D_hMpc(z22,k,0,linear=True) 
-p22_NLC_only = th22.FluxP3D_hMpc(z22,k,0,uv=False)
-p22_noUV_noNLC = th22.FluxP3D_hMpc(z22,k,0,linear=True,uv=False)
+#p22_UV_only = th22.FluxP3D_hMpc(z22,k,0,linear=True) 
+#p22_NLC_only = th22.FluxP3D_hMpc(z22,k,0,uv=False)
+#p22_noUV_noNLC = th22.FluxP3D_hMpc(z22,k,0,linear=True,uv=False)
 
 
 ## D_NL function for different mu
