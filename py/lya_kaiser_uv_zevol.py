@@ -41,7 +41,7 @@ def beta_UV_hMpc(k_hMpc, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa =
 	"""
 	return b_lya * beta_lya / b_UV_hMpc(k_hMpc,b_lya,b_g,b_sa,b_a,k0)
 
-def Kaiser_LyA_hMpc(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9):
+def Kaiser_LyA_hMpc(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, a_lya=2.9): #(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9):
 	"""
 	Returns the standard Kaiser factor for LyA (see Kaiser 1989).
 
@@ -55,9 +55,9 @@ def Kaiser_LyA_hMpc(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13,
 
 	"""
 
-	bias = b_UV_hMpc(k_hMpc, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300) * b_evol(z,a_lya=2.9)
+	bias = b_lya*b_evol(z,a_lya) #b_UV_hMpc(k_hMpc, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300) * b_evol(z,a_lya=2.9)
 
-	beta = beta_UV_hMpc(k_hMpc, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
+	beta = beta_lya #beta_UV_hMpc(k_hMpc, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
 
 	return bias**2 * (1 + beta * mu**2 )**2 
 

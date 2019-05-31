@@ -27,9 +27,11 @@ class TheoryLyaP3D(object):
         self.kmax=1.e1
         self.linPk = self.cosmo.LinPk_hMpc(self.kmin,self.kmax,1000)
 
-    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,uv=True,zevol=True, 
-        q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57,
-        beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9):
+#    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,uv=True,zevol=True, 
+#        q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57,
+#        beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9):
+    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,zevol=True,beta_lya = 1.650, b_lya = -0.134, a_lya=2.9,
+        q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57):
         """3D LyA power spectrum P_F(z,k,mu). 
 
             If linear = True, it will ignore small scale correction.
@@ -46,14 +48,20 @@ class TheoryLyaP3D(object):
         P = self.linPk(k)
 
         # get the LyA Kaiser term
-        if (uv==True) and (zevol==True) :
-            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
-        if (uv==False) and (zevol==True) :
-            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0., b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
-        if (uv==True) and (zevol==False) :
-            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=0)
-        if (uv==False) and (zevol==False) :
-            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0., b_sa = 1, b_a = -2./3, k0 = 300, a_lya=0.)
+#        if (uv==True) and (zevol==True) :
+#            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
+#        if (uv==False) and (zevol==True) :
+#            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0., b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9)
+#        if (uv==True) and (zevol==False) :
+#            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=0)
+#        if (uv==False) and (zevol==False) :
+#            kaiser = kailya.Kaiser_LyA_hMpc(k, mu, z, beta_lya = 1.650, b_lya = -0.134, b_g = 0., b_sa = 1, b_a = -2./3, k0 = 300, a_lya=0.)
+
+        if zevol==True:
+            kaiser = Kaiser_LyA_hMpc(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, a_lya=2.9)
+
+        else:
+            kaiser = Kaiser_LyA_hMpc(k_hMpc, mu, z, beta_lya = 1.650, b_lya = -0.134, a_lya=0.)
 
         # get the (*approximated*) redshift evolution term for nlc -- we took nlc fiducial values at z=2.4
         zevol_nlc = pow( (1+z)/(1+2.4), 0.9)
