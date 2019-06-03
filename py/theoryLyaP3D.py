@@ -6,7 +6,7 @@ Created on Mon Jun  3 16:26:46 2019
 @author: iflood
 """
 
-@ -1,76 +0,0 @@
+
 import numpy as np
 import lya_kaiser_uv_zevol as kailya
 import arinyo2015 as nlclya
