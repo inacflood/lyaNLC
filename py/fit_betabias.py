@@ -89,16 +89,25 @@ def makePofk(beta,b,kRefine=100,muRefine=100,z=2.4):
     The redshift value z can also be adjusted.
     """
     exp_list = np.linspace(-4.,0.9,kRefine)
-    k_list = [10**i for i in exp_list]
-    P_list = [integPower(k,beta,b,muRefine,z) for k in k_list]
+    counter=0
+    k_list = []
+    P_list = []
+    for exp in exp_list:
+        counter+=1
+        if counter % 10 == 0:
+            print("Working on k number",counter)
+        k=10**exp
+        k_list+=[k]
+        P_list+=[integPower(k,beta,b,muRefine,z)]
+    print("Created interpolation list, interpolating...")
     Pofk = interp.interp1d(k_list,P_list)
     return Pofk
 
 # Test function makePofk
-Pofk_beta10_b10=makePofk(1.0,-0.1,kRefine=1000,muRefine=1000)
+Pofk_beta10_b10=makePofk(1.0,-0.1,kRefine=10,muRefine=10)
 print(Pofk_beta10_b10(0.12))
 k_new = np.linspace(10**(-4),0.9,50)
-P_funcTest = [Pofk_beta10_b10(k) for k in k_new]
+P_funcTest = [Pofk_beta10_b10(k)*k/np.pi for k in k_new]
 
 plt.xscale('log')
 plt.yscale('log')
