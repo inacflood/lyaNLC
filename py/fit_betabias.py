@@ -89,14 +89,13 @@ def makePofk(beta,b,kRefine=100,muRefine=100,z=2.4):
     The redshift value z can also be adjusted.
     """
     exp_list = np.linspace(-4.,0.9,kRefine)
-    counter=0
+    counter = 0
     k_list = []
     P_list = []
     for exp in exp_list:
         counter+=1
-        if counter % 10 == 0:
-            print("Working on k number",counter)
         k=10**exp
+        print("Working on k=", k, "sample number", counter)
         k_list+=[k]
         P_list+=[integPower(k,beta,b,muRefine,z)]
     print("Created interpolation list, interpolating...")
@@ -104,15 +103,15 @@ def makePofk(beta,b,kRefine=100,muRefine=100,z=2.4):
     return Pofk
 
 # Test function makePofk
-Pofk_beta10_b10=makePofk(1.0,-0.1,kRefine=10,muRefine=10)
+Pofk_beta10_b10=makePofk(1.0,-0.1,kRefine=200,muRefine=50)
 print(Pofk_beta10_b10(0.12))
-k_new = np.linspace(10**(-4),0.9,50)
+k_new = np.linspace(10**(-4),0.9,200)
 P_funcTest = [Pofk_beta10_b10(k)*k/np.pi for k in k_new]
 
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
+plt.ylabel('P(k)*k/pi')
 plt.title(r"Interpolated Power plot, z=2.4, beta=1.0, bias=-0.1",fontsize=15)
 plt.plot(k_new,P_funcTest)
 
