@@ -24,7 +24,7 @@ y += np.abs(f_true*y) * np.random.randn(N)
 y += yerr * np.random.randn(N)
 
 # Plot our synthetic data along with fit from MLE
-fig = plt.figure()
+fig = plt.figure(1)
 ax = fig.add_subplot()
 
 ax.errorbar(x,y,yerr=yerr,fmt='b.')
@@ -64,19 +64,19 @@ sampler.run_mcmc(pos, 500)
 chain = sampler.chain
 
 
-param1 = plt.figure(1)
+param1 = plt.figure(2)
 for w in range(100):
     plt.plot([chain[w][s][0] for s in range(500)])
     
 param1.show()
 
-param2 = plt.figure(2)
+param2 = plt.figure(3)
 for w in range(100):
     plt.plot([chain[w][s][1] for s in range(500)])
     
 param2.show()
 
-param3 = plt.figure(3)
+param3 = plt.figure(4)
 for w in range(100):
    plt.plot([chain[w][s][1] for s in range(500)])
    
@@ -84,7 +84,22 @@ param3.show()
 
 samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 
+import corner
+fig = corner.corner(samples, labels=["$m$", "$b$", "$\ln\,f$"],
+                      truths=[m_true, b_true, np.log(f_true)])
+fig.savefig("triangle.png")
 
+xl = np.array([0, 10])
+for m, b, lnf in samples[np.random.randint(len(samples), size=100)]:
+    plt.plot(xl, m*xl+b, color="k", alpha=0.1)
+plt.plot(xl, m_true*xl+b_true, color="r", lw=2, alpha=0.8)
+plt.errorbar(x, y, yerr=yerr, fmt=".k")
+
+samples[:, 2] = np.exp(samples[:, 2])
+m_mcmc, b_mcmc, f_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0)))
+print("m:", m_mcmc, "b:", b_mcmc, "f:", f_mcmc)
 
 
 
