@@ -13,8 +13,8 @@ import scipy.optimize as op
 #from scipy.stats import norm
 
 # Choose the "true" parameters.
-b_true = -0.1
-beta_true = 1.0
+b_true = -0.134
+beta_true = 1.650
 mu=0.5
 betap_true=b_true*(1+beta_true*mu)
 
@@ -46,6 +46,7 @@ def betaConvert(betap,b,mu):
     beta_red=betap/b-1
     return beta_red/mu
 
+#Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):
     b, betap = theta
     model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b)
