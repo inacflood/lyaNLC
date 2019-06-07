@@ -109,17 +109,18 @@ for w in range(100):
 param2.show()
 param2.savefig("../Figures/WalkerPathsBeta.pdf")
 
+
+
 samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
-fig = corner.corner(samples, labels=["$b$", "$betap$"],
+cornerplt = corner.corner(samples, labels=["$b$", "$betap$"],
                       truths=[b_true, betap_true])
-fig.savefig("../Figures/triangleBetaB.png")
+plt.xscale("linear")
+cornerplt.savefig("../Figures/triangleBetaB.png")
+cornerplt.show()
 
 
 # Plot a few paths against data and intial fit
-plt.xscale('log')
-plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
-plt.title('Parameter exploration for beta, bias')
+pathView = plt.figure(4)
 
 #xl = np.array([0, 10])
 for b, betap in samples[np.random.randint(len(samples), size=100)]:
@@ -127,7 +128,13 @@ for b, betap in samples[np.random.randint(len(samples), size=100)]:
 plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true), color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P, yerr=Perr, fmt=".k")
 
-plt.savefig("../Figures/SamplePaths.pdf")
+plt.xscale('log')
+plt.xlabel('k [(Mpc/h)^-1]')
+plt.ylabel('P(k)')
+plt.title('Parameter exploration for beta, bias')
+
+pathView.savefig("../Figures/SamplePaths.pdf")
+pathView.show()
 
 # Final results
 samples[:, 1] = np.exp(samples[:, 1])

@@ -70,7 +70,7 @@ fig.savefig("../Figures/IntitalFit_emcee_justbias.pdf")
 
 def lnprior(theta):
     b = theta
-    var_b=np.abs(b_ml)*.2
+    var_b=np.abs(b_ml)*.03
     #var_betap=np.abs(betap_ml)*.2
     if b_ml-var_b < b < b_ml+var_b: 
         return 0.0
@@ -108,7 +108,7 @@ param1.savefig("../Figures/WalkerPathsBias_justbias.pdf")
 #    
 #param2.show()
 #param2.savefig("../Figures/WalkerPathsBeta.pdf")
-
+plt.xscale("linear")
 samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 fig = corner.corner(samples, labels=["$b$"],
                       truths=[b_true])

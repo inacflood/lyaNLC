@@ -44,9 +44,9 @@ def P3D_to_P1D(z,theory_3D_hMpc,kpar_max_hMpc=10.,linear=False):
     P1 = np.zeros(len(log_kpa))                                                                               
 
     for l in range(len(log_kpa)) : 
-    	kpa = 10**log_kpa[l] 
+        kpa = 10**log_kpa[l] 
         kpe_max = np.sqrt(kpar_max_hMpc**2 - kpa**2)
-    	log_kpe= np.arange(-4.,log10(kpe_max),dlogk)
+        log_kpe= np.arange(-4.,log10(kpe_max),dlogk)
         kpe = 10**log_kpe
         k = np.sqrt(kpe**2 + kpa**2)
         pth = np.zeros(len(k))
@@ -57,7 +57,7 @@ def P3D_to_P1D(z,theory_3D_hMpc,kpar_max_hMpc=10.,linear=False):
                 pth[i] = theory_3D_hMpc.FluxP3D_hMpc(z,k[i],(kpa/k[i]),linear=True)
 
         P1[l] = dlogk * np.sum( kpe**2 * pth)
-    return 10**log_kpa, P1
+        return 10**log_kpa, P1
 
 ## get 3D data sets to play with
 
