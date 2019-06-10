@@ -52,15 +52,21 @@ def lnlike(theta, k, P, Perr):
     b = theta
     model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b)
     inv_sigma2 = 1.0/(Perr**2 + model**2)
-    return -0.5*(np.sum((P-model)**2*inv_sigma2 - np.log(inv_sigma2)))
+    return -0.5*(np.sum((P-model)**2*inv_sigma2))
+
+err = 0.2
+var_b=np.abs(b_true)*err
+min_b=b_true-var_b
+max_b=b_true+var_b
 
 nll = lambda *args: -lnlike(*args)
 result = op.minimize(nll, [b_true], args=(k, P, Perr))
+                #, method='L-BFGS-B',bounds=[(min_b,max_b)])
 [b_ml]= result["x"]
 
 result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_ml)
 ax.plot(k,result_plot)
-fig.savefig("../Figures/IntitalFit_emcee_justbias.pdf")
+#fig.savefig("../Figures/IntitalFit_emcee_justbias.pdf")
 
 #print(b_ml, betap_ml)
 
@@ -70,9 +76,8 @@ fig.savefig("../Figures/IntitalFit_emcee_justbias.pdf")
 
 def lnprior(theta):
     b = theta
-    var_b=np.abs(b_ml)*.03
     #var_betap=np.abs(betap_ml)*.2
-    if b_ml-var_b < b < b_ml+var_b: 
+    if min_b < b < max_b: 
         return 0.0
     return -np.inf
 
@@ -101,39 +106,36 @@ for w in range(100):
 param1.show()
 param1.savefig("../Figures/WalkerPathsBias_justbias.pdf")
 
-#param2 = plt.figure(3)
-#plt.ylabel('beta')
-#for w in range(100):
-#    plt.plot([betaConvert(chain[w][s][1],chain[w][s][0],mu) for s in range(500)])
-#    
-#param2.show()
-#param2.savefig("../Figures/WalkerPathsBeta.pdf")
-plt.xscale("linear")
-samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
-fig = corner.corner(samples, labels=["$b$"],
-                      truths=[b_true])
-fig.savefig("../Figures/triangleB_justbias.png")
 
+samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 
 # Plot a few paths against data and intial fit
-plt.xscale('log')
-plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
-plt.title('Parameter exploration for  bias')
+pathView = plt.figure(4)
 
-#xl = np.array([0, 10])
 for b in samples[np.random.randint(len(samples), size=100)]:
     plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b), color="k", alpha=0.1)
 plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true), color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P, yerr=Perr, fmt=".k")
 
-plt.savefig("../Figures/SamplePaths_justbias.pdf")
+plt.xscale('log')
+plt.xlabel('k [(Mpc/h)^-1]')
+plt.ylabel('P(k)')
+plt.title('Parameter exploration for bias')
+
+pathView.savefig("../Figures/SamplePaths_justbias.pdf")
+pathView.show()
 
 # Final results
-samples[:, 0] = np.exp(samples[:, 0])
-v=np.percentile(samples, [16, 50, 84],axis=0)
-b_mcmc= (v[1][0], v[2][0]-v[1][0], v[1][0]-v[0][0])
-print("b:", b_mcmc)
+cornerplt = corner.corner(samples, labels=["$b$"],
+                      truths=[b_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+cornerplt.savefig("../Figures/triangleB_justbias.png")
+cornerplt.show()
+
+
+#samples[:, 0] = np.exp(samples[:, 0])
+#v=np.percentile(samples, [16, 50, 84],axis=0)
+#b_mcmc= (v[1][0], v[2][0]-v[1][0], v[1][0]-v[0][0])
+#print("b:", b_mcmc)
 
 
 

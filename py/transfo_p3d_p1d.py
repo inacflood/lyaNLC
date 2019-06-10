@@ -88,13 +88,13 @@ th30 = tP3D.TheoryLyaP3D(cosmo30)
 dkM30=th30.cosmo.dkms_dhMpc
 
 
-## get 1D data sets to compare to
+# get 1D data sets to compare to
 
-npd22 = npd.LyA_P1D(z22)
-npd24 = npd.LyA_P1D(z24)
-npd26 = npd.LyA_P1D(z26)
-npd28 = npd.LyA_P1D(z28)
-npd30 = npd.LyA_P1D(z30)
+#npd22 = npd.LyA_P1D(z22)
+#npd24 = npd.LyA_P1D(z24)
+#npd26 = npd.LyA_P1D(z26)
+#npd28 = npd.LyA_P1D(z28)
+#npd30 = npd.LyA_P1D(z30)
 
 
 ## generate our 1D power from the 3D test sets
@@ -136,11 +136,11 @@ plt.plot(p3t1_28[0]/dkM28(z28) , p3t1_28[0] * p3t1_28[1] / np.pi,'b',alpha=0.7, 
 plt.plot(p3t1_30[0]/dkM30(z30) , p3t1_30[0] * p3t1_30[1] / np.pi,'m',alpha=0.7, linewidth=2 ,label=r'$z = 3.0 $, th')
 
 
-plt.plot( npd22.k , npd22.k/np.pi*(npd22.Pk_emp()) , 'ks', alpha=0.4, linewidth=2, label=r'$z=2.2$, npd')
-plt.plot( npd24.k , npd24.k/np.pi*(npd24.Pk_emp()) , 'r^', alpha=0.4, linewidth=2, label=r'$z=2.4$, npd')
-plt.plot( npd26.k , npd26.k/np.pi*(npd26.Pk_emp()) , 'gH', alpha=0.4, linewidth=2, label=r'$z=2.2$, npd')
-plt.plot( npd28.k , npd28.k/np.pi*(npd28.Pk_emp()) , 'b*', alpha=0.4, linewidth=2, label=r'$z=2.4$, npd')
-plt.plot( npd30.k , npd30.k/np.pi*(npd30.Pk_emp()) , 'mo', alpha=0.4, linewidth=2, label=r'$z=3.0$, npd')
+#plt.plot( npd22.k , npd22.k/np.pi*(npd22.Pk_emp()) , 'ks', alpha=0.4, linewidth=2, label=r'$z=2.2$, npd')
+#plt.plot( npd24.k , npd24.k/np.pi*(npd24.Pk_emp()) , 'r^', alpha=0.4, linewidth=2, label=r'$z=2.4$, npd')
+#plt.plot( npd26.k , npd26.k/np.pi*(npd26.Pk_emp()) , 'gH', alpha=0.4, linewidth=2, label=r'$z=2.2$, npd')
+#plt.plot( npd28.k , npd28.k/np.pi*(npd28.Pk_emp()) , 'b*', alpha=0.4, linewidth=2, label=r'$z=2.4$, npd')
+#plt.plot( npd30.k , npd30.k/np.pi*(npd30.Pk_emp()) , 'mo', alpha=0.4, linewidth=2, label=r'$z=3.0$, npd')
 
 
 plt.legend(loc='best',fontsize=15)

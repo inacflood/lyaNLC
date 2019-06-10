@@ -41,27 +41,37 @@ plt.ylabel('P(k)')
 
 ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
-# Function to convert our modified beta fitting variable to beta
-
 def betaConvert(betap,b,mu):
+    """
+    Function to convert our modified beta fitting variable to beta
+    """
     beta_red=betap/b-1
     return beta_red/mu
 
-#Maximum Likelihood Estimate fit to the synthetic data
+# Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):
     b, betap = theta
     model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b)
     inv_sigma2 = 1.0/(Perr**2 + model**2)
-    return -0.5*(np.sum((P-model)**2*inv_sigma2 - np.log(inv_sigma2)))
+    return -0.5*(np.sum((P-model)**2*inv_sigma2))
+
+err = 0.2
+var_b=np.abs(b_true)*err
+var_betap=np.abs(betap_true)*err
+min_b=b_true-var_b
+max_b=b_true+var_b
+min_betap=betap_true-var_betap
+max_betap=betap_true+var_betap
+
 
 nll = lambda *args: -lnlike(*args)
 result = op.minimize(nll, [b_true, betap_true], args=(k, P, Perr))
+                #, method='L-BFGS-B',bounds=[(min_b,max_b),(min_betap,max_betap)])
 b_ml, betap_ml = result["x"]
 
 result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap_ml,b_ml,mu), b_lya=b_ml)
 ax.plot(k,result_plot)
 fig.savefig("../Figures/IntitalFit_emcee.pdf")
-
 #print(b_ml, betap_ml)
 
 
@@ -70,9 +80,7 @@ fig.savefig("../Figures/IntitalFit_emcee.pdf")
 
 def lnprior(theta):
     b, betap = theta
-    var_b=np.abs(b_ml)*.2
-    var_betap=np.abs(betap_ml)*.2
-    if b_ml-var_b < b < b_ml+var_b and betap_ml-var_betap < betap < betap_ml+var_betap:
+    if min_b < b < max_b and min_betap < betap < max_betap:
         return 0.0
     return -np.inf
 
@@ -112,17 +120,10 @@ param2.savefig("../Figures/WalkerPathsBeta.pdf")
 
 
 samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
-cornerplt = corner.corner(samples, labels=["$b$", "$betap$"],
-                      truths=[b_true, betap_true])
-plt.xscale("linear")
-cornerplt.savefig("../Figures/triangleBetaB.png")
-cornerplt.show()
-
 
 # Plot a few paths against data and intial fit
 pathView = plt.figure(4)
 
-#xl = np.array([0, 10])
 for b, betap in samples[np.random.randint(len(samples), size=100)]:
     plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b), color="k", alpha=0.1)
 plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true), color="r", lw=2, alpha=0.8)
@@ -137,11 +138,17 @@ pathView.savefig("../Figures/SamplePaths.pdf")
 pathView.show()
 
 # Final results
-samples[:, 1] = np.exp(samples[:, 1])
-b_mcmc, betap_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-                             zip(*np.percentile(samples, [16, 50, 84],
-                                                axis=0)))
-print("b:", b_mcmc, "beta:", betap_mcmc)
+cornerplt = corner.corner(samples, labels=["$b$", "$betap$"],
+                      truths=[b_true, betap_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+cornerplt.savefig("../Figures/triangleBetaB.png")
+cornerplt.show()
+
+
+#samples[:, 1] = np.exp(samples[:, 1])
+#b_mcmc, betap_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+#                             zip(*np.percentile(samples, [16, 50, 84],
+#                                                axis=0)))
+#print("b:", b_mcmc, "beta:", [betaConvert(betap,b_mcmc[1],mu) for betap in betap_mcmc])
 
 
 
