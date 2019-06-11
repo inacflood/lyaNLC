@@ -17,7 +17,7 @@ import corner
 b_true = -0.134
 beta_true = 1.650
 mu=1.0
-betap_true=b_true*(1+beta_true*mu)
+betap_true=b_true*(1+beta_true*mu**2)
 
 
 z24=2.4
@@ -46,7 +46,7 @@ def betaConvert(betap,b,mu):
     Function to convert our modified beta fitting variable to beta
     """
     beta_red=betap/b-1
-    return beta_red/mu
+    return beta_red/mu**2
 
 # Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):

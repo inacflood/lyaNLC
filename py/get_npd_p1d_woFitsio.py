@@ -5,6 +5,7 @@ class LyA_P1D():
         Returns the One-dimensional LyA forest power spectrum obtained with the 
         Fourier transform method {"0"} -or- the likelihood method {"1"} from Palanque-Delabrouille et al (2013) 
         for redshift bins: 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4 
+        NB: uses numpy to load .dat files INSTEAD of using fitsio to load .fits files
     """
     def __init__(self,z_bin,method=0):
         """
