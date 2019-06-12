@@ -51,22 +51,21 @@ def lnlike(theta, k_res, P, Perr):
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-err = 0.9
+err = 0.3
 bp_f = -0.321
 beta_f = 1.656
 var_bp=np.abs(bp_f)*err
 var_beta=np.abs(beta_f)*err
-min_bp=bp_f-var_bp
-max_bp=bp_f+var_bp
-min_beta=beta_f-var_beta
-max_beta=beta_f+var_beta
+min_bp= -0.324
+max_bp= -0.318
+min_beta=1.57
+max_beta= 1.742
 
 #y_f = th24.makeP1D_P(k, b_lya=bConvert(bp_f,beta_f), beta_lya=beta_f)*k*dkM24z/np.pi
 #ax.plot(k,y_f)
 
 nll = lambda *args: -lnlike(*args)
-result = op.minimize(nll, [bp_f, beta_f], args=(k_res, P, Perr))
-        #, method='L-BFGS-B',bounds=[(min_bp,max_bp),(min_beta,max_beta)])
+result = op.minimize(nll, [bp_f, beta_f], args=(k_res, P, Perr),method='L-BFGS-B',bounds=[(min_bp,max_bp),(min_beta,max_beta)])
 bp_ml, beta_ml = result["x"]
 
 result_plot = th24.makeP1D_P(k_res, b_lya=bConvert(bp_ml,beta_ml), beta_lya=beta_ml)*k_res/np.pi
