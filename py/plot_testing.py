@@ -7,7 +7,7 @@ Created on Wed May 29 12:15:50 2019
 """
 
 import numpy as np
-import cosmoCAMB as cCAMB
+import cosmoCAMB_newParams as cCAMB
 import theoryLyaP3D as tP3D
 #import arinyo2015 as nlclya
 import matplotlib.pyplot as plt

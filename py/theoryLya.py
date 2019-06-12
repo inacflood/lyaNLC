@@ -10,7 +10,7 @@ Created on Mon Jun  3 16:26:46 2019
 import numpy as np
 import lya_kaiser_uv_zevol as kailya
 import arinyo2015 as nlclya
-import cosmoCAMB as cCAMB
+import cosmoCAMB_newParams as cCAMB
 
 class TheoryLyaP3D(object):
     """
@@ -39,7 +39,7 @@ class TheoryLyaP3D(object):
 #    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,uv=True,zevol=True, 
 #        q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57,
 #        beta_lya = 1.650, b_lya = -0.134, b_g = 0.13, b_sa = 1, b_a = -2./3, k0 = 300, a_lya=2.9):
-    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,zevol=True,beta_lya = 1.650, b_lya = -0.134, a_lya=2.9,
+    def FluxP3D_hMpc(self,z,k_hMpc,mu,linear=False,zevol=True,beta_lya = 1.656, b_lya = -0.121, a_lya=2.9,
         q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57):
         """3D LyA power spectrum P_F(z,k,mu). 
 
@@ -83,7 +83,7 @@ class TheoryLyaP3D(object):
 
         return P * kaiser * nlc
     
-    def makeP1D_I(self, z, max_kpa=10.,linear=False):
+    def makeP1D_I(self, z, max_kpa = 10., linear = False, beta_lya = 1.656, b_lya = -0.121, prec = 200):
         """Compute 1D power spectrum P_1D(k) from 3D power spectrum P(k) in hMpc, ie self.
             Uses a manual Rimannian sum to integrate.
     
@@ -105,8 +105,6 @@ class TheoryLyaP3D(object):
     
         [!] All units internally are in h/Mpc.
         """
-        prec=200
-        
         kpa_start,kpa_stop=[-4,np.log10(max_kpa-0.01)]
         kpa_list=np.logspace(kpa_start,kpa_stop,prec)
     
@@ -120,10 +118,45 @@ class TheoryLyaP3D(object):
             kpe_list = np.logspace(kpe_start,kpe_stop,prec)
             
             k_list = np.sqrt(kpe_list**2 + kpa**2)
-            power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear) for k in k_list]
+            power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya) for k in k_list]
             for i in range(len(k_list)-1):  # perform Riemannian sum
                 P1D[kpa_i]+=(k_list[i+1]-k_list[i])*kpe_list[i]**2*(power_vals[i]+power_vals[i+1])/2/(2*np.pi)
         return kpa_list, P1D
+    
+    def makeP1D_P(self, kpa, z = 2.4, max_kpa = 10., linear = False, beta_lya = 1.656, b_lya = -0.121, prec = 200):
+        """Compute 1D power spectrum P_1D(k) at one value of k from 3D power spectrum P(k) in hMpc, ie self.
+            Uses a manual Rimannian sum to integrate.
+    
+            P_1D(k) = \int dkpe ( kpe / (2pi) ) * P(kpe,kpa)
+    
+        where: 
+            kpa = k*mu 
+                and 
+            kpe = k*sqrt(1-mu**2)
+    
+        Args:
+            z = redshift
+            linear : set to False to include Arinyo et al 2015 NLC
+    
+        Returns:
+            kpa_list, P1D
+            params: k_parallel
+            P1D (array): 1D velocity power spectrum
+    
+        [!] All units internally are in h/Mpc.
+        """
+        P1D = 0    
+        kpe_start,kpe_stop = [-4,np.log10(np.sqrt(max_kpa**2-kpa**2))-10**(-5)] 
+        # 10**(-5) above used to prevent hitting the edge of interpolation limit
+        kpe_list = np.logspace(kpe_start,kpe_stop,prec)
+        
+        k_list = np.sqrt(kpe_list**2 + kpa**2)
+        power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya) for k in k_list]
+        
+        for i in range(len(k_list)-1):  # perform Riemannian sum
+            P1D+=(k_list[i+1]-k_list[i])*kpe_list[i]**2*(power_vals[i]+power_vals[i+1])/2/(2*np.pi)
+            
+        return P1D
     
     def makeP1D_T(self, z, max_kpa=10.,linear=False):
         """Compute 1D power spectrum P_1D(k) from 3D power spectrum P(k) in hMpc, ie self.

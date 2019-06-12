@@ -5,7 +5,7 @@ Created on Tue Jun  4 14:11:57 2019
 
 @author: iflood
 """
-import cosmoCAMB as cCAMB
+import cosmoCAMB_newParams as cCAMB
 import theoryLyaP3D as tP3D
 import numpy as np
 import matplotlib.pyplot as plt

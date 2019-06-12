@@ -5,8 +5,8 @@ Created on Tue Jun  4 14:11:57 2019
 
 @author: iflood
 """
-import cosmoCAMB as cCAMB
-import theoryLyaP3D as tP3D
+import cosmoCAMB_newParams as cCAMB
+import theoryLya as tLyA
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as op
@@ -14,9 +14,15 @@ import corner
 import get_npd_p1d_woFitsio as npd
 #from scipy.stats import norm
 
+z24=2.4
+cosmo24 = cCAMB.Cosmology(z24)
+th24 = tLyA.TheoryLyaP3D(cosmo24)
+dkM24z = th24.cosmo.dkms_dhMpc(z24)
+
 # Get actual data
 data = npd.LyA_P1D(2.4)
 k = data.k
+k_res = k*dkM24z
 P = data.k/np.pi*data.Pk_emp()
 Perr = data.Pk_stat*data.k/np.pi
 
@@ -30,37 +36,42 @@ plt.ylabel(r'$(k_{\parallel}/\pi)*P_{1D}(k_{\parallel})$')
 
 ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
-def betaConvert(betap,b,mu):
+def bConvert(bp,beta):
     """
     Function to convert our modified beta fitting variable to beta
     """
-    beta_red=betap/b-1
-    return beta_red/mu**2
+    b=bp/(1+beta)
+    return b
 
 # Maximum Likelihood Estimate fit to the synthetic data
-def lnlike(theta, k, P, Perr):
-    b, betap = theta
-    model = #insert interpolated model here
+
+def lnlike(theta, k_res, P, Perr):
+    bp, beta = theta
+    model = th24.makeP1D_P(k_res, b_lya=bConvert(bp,beta), beta_lya=beta)*k_res/np.pi
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-err = 0.2
-var_b=np.abs(b_true)*err
-var_betap=np.abs(betap_true)*err
-min_b=b_true-var_b
-max_b=b_true+var_b
-min_betap=betap_true-var_betap
-max_betap=betap_true+var_betap
+err = 0.9
+bp_f = -0.321
+beta_f = 1.656
+var_bp=np.abs(bp_f)*err
+var_beta=np.abs(beta_f)*err
+min_bp=bp_f-var_bp
+max_bp=bp_f+var_bp
+min_beta=beta_f-var_beta
+max_beta=beta_f+var_beta
 
+#y_f = th24.makeP1D_P(k, b_lya=bConvert(bp_f,beta_f), beta_lya=beta_f)*k*dkM24z/np.pi
+#ax.plot(k,y_f)
 
 nll = lambda *args: -lnlike(*args)
-result = op.minimize(nll, [b_true, betap_true], args=(k, P, Perr))
-                #, method='L-BFGS-B',bounds=[(min_b,max_b),(min_betap,max_betap)])
-b_ml, betap_ml = result["x"]
+result = op.minimize(nll, [bp_f, beta_f], args=(k_res, P, Perr))
+        #, method='L-BFGS-B',bounds=[(min_bp,max_bp),(min_beta,max_beta)])
+bp_ml, beta_ml = result["x"]
 
-result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap_ml,b_ml,mu), b_lya=b_ml)
+result_plot = th24.makeP1D_P(k_res, b_lya=bConvert(bp_ml,beta_ml), beta_lya=beta_ml)*k_res/np.pi
 ax.plot(k,result_plot)
-fig.savefig("../Figures/IntitalFit_emcee.pdf")
+fig.savefig("../Figures/P1D_IntitalFit_emcee.pdf")
 #print(b_ml, betap_ml)
 
 
@@ -68,8 +79,8 @@ fig.savefig("../Figures/IntitalFit_emcee.pdf")
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
-    b, betap = theta
-    if min_b < b < max_b and min_betap < betap < max_betap:
+    bp, beta = theta
+    if min_bp < bp < max_bp and min_beta < beta < max_beta:
         return 0.0
     return -np.inf
 
@@ -84,52 +95,53 @@ pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 # Run emcee error evaluation
 import emcee
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr))
 
-sampler.run_mcmc(pos, 500)
+nsteps=300
+sampler.run_mcmc(pos, nsteps)
 chain = sampler.chain
 
 # Plots to visualize emcee walker paths parameter values
 param1 = plt.figure(2)
-plt.ylabel('bias')
-for w in range(100):
-    plt.plot([chain[w][s][0] for s in range(500)])
+plt.ylabel('beta')
+for w in range(nwalkers):
+    plt.plot([chain[w][s][1] for s in range(nsteps)])
     
 param1.show()
-param1.savefig("../Figures/WalkerPathsBias.pdf")
+param1.savefig("../Figures/P1D_WalkerPathsBeta.pdf")
 
 param2 = plt.figure(3)
-plt.ylabel('beta')
-for w in range(100):
-    plt.plot([betaConvert(chain[w][s][1],chain[w][s][0],mu) for s in range(500)])
+plt.ylabel('b(1+beta)')
+for w in range(nwalkers):
+    plt.plot([chain[w][s][0] for s in range(nsteps)])
     
 param2.show()
-param2.savefig("../Figures/WalkerPathsBeta.pdf")
+param2.savefig("../Figures/WalkerPathsBiasMod.pdf")
 
 
 
-samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
+samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
 
 # Plot a few paths against data and intial fit
 pathView = plt.figure(4)
 
-for b, betap in samples[np.random.randint(len(samples), size=100)]:
-    plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b), color="k", alpha=0.1)
-plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true), color="r", lw=2, alpha=0.8)
+for bp, beta in samples[np.random.randint(len(samples), size=80)]:
+    plt.plot(k, th24.makeP1D_P(k_res, b_lya=bConvert(bp,beta), beta_lya=beta)*k_res/np.pi, color="k", alpha=0.1)
+plt.plot(k,th24.makeP1D_P(k_res, beta_lya = beta_f, b_lya=bConvert(bp_f,beta_f))*k_res/np.pi, color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P, yerr=Perr, fmt=".k")
 
-plt.xscale('log')
+plt.yscale('log')
 plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
+plt.ylabel('P(k)*k/pi')
 plt.title('Parameter exploration for beta, bias')
 
-pathView.savefig("../Figures/SamplePaths.pdf")
+pathView.savefig("../Figures/P1D_SamplePaths.pdf")
 pathView.show()
 
 # Final results
-cornerplt = corner.corner(samples, labels=["$b$", "$betap$"],
-                      truths=[b_true, betap_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
-cornerplt.savefig("../Figures/triangleBetaB.png")
+cornerplt = corner.corner(samples, labels=["$bp$", "$beta$"],
+                      truths=[bp_f, beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+cornerplt.savefig("../Figures/P1D_triangleBetaB.png")
 cornerplt.show()
 
 

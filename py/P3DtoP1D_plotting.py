@@ -8,7 +8,7 @@ Created on Mon Jun 10 14:08:41 2019
 
 import numpy as np
 import matplotlib.pyplot as plt
-import cosmoCAMB as cCAMB
+import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d_woFitsio as npd
 
