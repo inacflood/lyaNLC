@@ -11,34 +11,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as op
 import corner
+import get_npd_p1d_woFitsio as npd
 #from scipy.stats import norm
 
-# Choose the "true" parameters.
-b_true = -0.134
-beta_true = 1.650
-mu=1.0
-betap_true=b_true*(1+beta_true*mu**2)
-print(betap_true)
-
-
-z24=2.4
-cosmo24 = cCAMB.Cosmology(z24)
-th24 = tP3D.TheoryLyaP3D(cosmo24)
-
-# Generate some synthetic data from the model.
-N = 100
-k = np.sort(np.logspace(-4,0.9,N))
-Perr = np.random.rand(N)
-P = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true)
-P += Perr * np.random.randn(N)
+# Get actual data
+data = npd.LyA_P1D(2.4)
+k = data.k
+P = data.k/np.pi*data.Pk_emp()
+Perr = data.Pk_stat*data.k/np.pi
 
 # Plot our synthetic data along with fit from MLE
 fig = plt.figure(1)
 ax = fig.add_subplot()
-plt.xscale('log')
-plt.yscale('linear')
-plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
+plt.xscale('linear')
+plt.yscale('log')
+plt.xlabel(r'$k_{\parallel}\,\left(\rm km/s\right)^{-1}$')
+plt.ylabel(r'$(k_{\parallel}/\pi)*P_{1D}(k_{\parallel})$')
 
 ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
@@ -52,7 +40,7 @@ def betaConvert(betap,b,mu):
 # Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):
     b, betap = theta
-    model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b)
+    model = #insert interpolated model here
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
