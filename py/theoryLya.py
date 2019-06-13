@@ -77,13 +77,14 @@ class TheoryLyaP3D(object):
 
         # get the lya nlc correction term
         if linear == False :
-            nlc = nlclya.D_hMpc_AiP2015(k,mu,P,q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57) * zevol_nlc
+            nlc = nlclya.D_hMpc_AiP2015(k,mu,P,q1,q2,kp,kvav,av,bv) * zevol_nlc
         if linear == True :
             nlc = 1
 
         return P * kaiser * nlc
     
-    def makeP1D_I(self, z, max_kpa = 10., linear = False, beta_lya = 1.656, b_lya = -0.121, prec = 200):
+    def makeP1D_I(self, z, max_kpa=10., linear=False, zevol=True, beta_lya=1.656, b_lya=-0.121, a_lya=2.9,
+        q1=0.057, q2=0.368, kp=9.2, kvav=0.48, av=0.156, bv=1.57, prec=200):
         """Compute 1D power spectrum P_1D(k) from 3D power spectrum P(k) in hMpc, ie self.
             Uses a manual Rimannian sum to integrate.
     
@@ -118,12 +119,14 @@ class TheoryLyaP3D(object):
             kpe_list = np.logspace(kpe_start,kpe_stop,prec)
             
             k_list = np.sqrt(kpe_list**2 + kpa**2)
-            power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya) for k in k_list]
+            power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya,a_lya=a_lya,
+        q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv) for k in k_list]
             for i in range(len(k_list)-1):  # perform Riemannian sum
                 P1D[kpa_i]+=(k_list[i+1]-k_list[i])*kpe_list[i]**2*(power_vals[i]+power_vals[i+1])/2/(2*np.pi)
         return kpa_list, P1D
     
-    def makeP1D_P(self, kpa, z = 2.4, max_kpa = 10., linear = False, beta_lya = 1.656, b_lya = -0.121, prec = 200):
+    def makeP1D_P(self, kpa, z = 2.4, max_kpa = 10., linear = False, zevol=True, beta_lya=1.656, b_lya=-0.121, a_lya=2.9,
+        q1=0.057, q2=0.368, kp=9.2, kvav=0.48, av=0.156, bv=1.57, prec = 200):
         """Compute 1D power spectrum P_1D(k) at one value of k from 3D power spectrum P(k) in hMpc, ie self.
             Uses a manual Rimannian sum to integrate.
     
@@ -151,7 +154,8 @@ class TheoryLyaP3D(object):
         kpe_list = np.logspace(kpe_start,kpe_stop,prec)
         
         k_list = np.sqrt(kpe_list**2 + kpa**2)
-        power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya) for k in k_list]
+        power_vals = [self.FluxP3D_hMpc(z,k,(kpa/k),linear=linear, beta_lya=beta_lya, b_lya=b_lya, a_lya=a_lya,
+        q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv) for k in k_list]
         
         for i in range(len(k_list)-1):  # perform Riemannian sum
             P1D+=(k_list[i+1]-k_list[i])*kpe_list[i]**2*(power_vals[i]+power_vals[i+1])/2/(2*np.pi)

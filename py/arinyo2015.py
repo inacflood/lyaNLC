@@ -29,6 +29,6 @@ def D_hMpc_AiP2015(k_hMpc,mu,Pk_lin,q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,
 	Analytical formula : eq(3.6) of Arinyo-i-Prats et al 2015 [arXiv:1506.04519] 
 	"""
 
-	to_exp = D_NL_hMpc(k_hMpc,Pk_lin,q1,q2) *  D_v_hMpc(k_hMpc,mu,kvav=0.48,av=0.156) - D_p_hMpc(k_hMpc,kp=9.2)
+	to_exp = D_NL_hMpc(k_hMpc,Pk_lin,q1,q2) *  D_v_hMpc(k_hMpc,mu,kvav,av) - D_p_hMpc(k_hMpc,kp)
 
 	return np.exp(to_exp) 

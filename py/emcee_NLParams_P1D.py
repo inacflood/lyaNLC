@@ -36,41 +36,35 @@ plt.ylabel(r'$(k_{\parallel}/\pi)*P_{1D}(k_{\parallel})$')
 
 ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
-def bConvert(bp,beta):
-    """
-    Function to convert our modified beta fitting variable to beta
-    """
-    b=bp/(1+beta)
-    return b
 
 # Maximum Likelihood Estimate fit to the synthetic data
 
 def lnlike(theta, k_res, P, Perr):
-    bp, beta = theta
-    model = th24.makeP1D_P(k_res, b_lya=bConvert(bp,beta), beta_lya=beta)*k_res/np.pi
+    q1,q2 = theta
+    model = th24.makeP1D_P(k_res, q1=q1, q2=q2)*k_res/np.pi
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-err = 0.3
-bp_f = -0.321
-beta_f = 1.656
-var_bp=np.abs(bp_f)*err
-var_beta=np.abs(beta_f)*err
-min_bp= -0.324
-max_bp= -0.318
-min_beta=1.57
-max_beta= 1.742
+err = 0.1
+q1_f = 0.057 
+q2_f = 0.368
+var_1=np.abs(q1_f)*err
+var_2=np.abs(q2_f)*err
+min_1= q1_f - var_1
+max_1= q1_f + var_1
+min_2= q2_f - var_2
+max_2= q2_f + var_2
 
 #y_f = th24.makeP1D_P(k, b_lya=bConvert(bp_f,beta_f), beta_lya=beta_f)*k*dkM24z/np.pi
 #ax.plot(k,y_f)
 
 nll = lambda *args: -lnlike(*args)
-result = op.minimize(nll, [bp_f, beta_f], args=(k_res, P, Perr),method='L-BFGS-B',bounds=[(min_bp,max_bp),(min_beta,max_beta)])
-bp_ml, beta_ml = result["x"]
+result = op.minimize(nll, [q1_f, q2_f], args=(k_res, P, Perr),method='L-BFGS-B',bounds=[(min_1,max_1),(min_2,max_2)])
+q1_ml, q2_ml = result["x"]
 
-result_plot = th24.makeP1D_P(k_res, b_lya=bConvert(bp_ml,beta_ml), beta_lya=beta_ml)*k_res/np.pi
+result_plot = th24.makeP1D_P(k_res, q1=q1_ml, q2=q2_ml)*k_res/np.pi
 ax.plot(k,result_plot)
-fig.savefig("../Figures/P1D_IntitalFit_emcee.pdf")
+fig.savefig("../Figures/z24_MCMC_NLParams/{q1,q2}/IntitalFit_error10.pdf")
 #print(b_ml, betap_ml)
 
 
@@ -78,8 +72,8 @@ fig.savefig("../Figures/P1D_IntitalFit_emcee.pdf")
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
-    bp, beta = theta
-    if min_bp < bp < max_bp and min_beta < beta < max_beta:
+    q1, q2 = theta
+    if min_1 < q1 < max_1 and min_2 < q2 < max_2:
         return 0.0
     return -np.inf
 
@@ -107,7 +101,7 @@ for w in range(nwalkers):
     plt.plot([chain[w][s][1] for s in range(nsteps)])
     
 param1.show()
-param1.savefig("../Figures/P1D_WalkerPathsBeta.pdf")
+param1.savefig("../Figures/z24_MCMC_NLParams/{q1,q2}/WalkerPathsq1_error10.pdf")
 
 param2 = plt.figure(3)
 plt.ylabel('b(1+beta)')
@@ -115,7 +109,7 @@ for w in range(nwalkers):
     plt.plot([chain[w][s][0] for s in range(nsteps)])
     
 param2.show()
-param2.savefig("../Figures/WalkerPathsBiasMod.pdf")
+param2.savefig("../Figures/z24_MCMC_NLParams/{q1,q2}/WalkerPathsq2_error10.pdf")
 
 
 
@@ -124,9 +118,9 @@ samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 # Plot a few paths against data and intial fit
 pathView = plt.figure(4)
 
-for bp, beta in samples[np.random.randint(len(samples), size=80)]:
-    plt.plot(k, th24.makeP1D_P(k_res, b_lya=bConvert(bp,beta), beta_lya=beta)*k_res/np.pi, color="k", alpha=0.1)
-plt.plot(k,th24.makeP1D_P(k_res, beta_lya = beta_f, b_lya=bConvert(bp_f,beta_f))*k_res/np.pi, color="r", lw=2, alpha=0.8)
+for q1, q2 in samples[np.random.randint(len(samples), size=80)]:
+    plt.plot(k, th24.makeP1D_P(k_res, q1=q1, q2=q2)*k_res/np.pi, color="k", alpha=0.1)
+plt.plot(k,th24.makeP1D_P(k_res, q1=q1_f, q2=q2_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P, yerr=Perr, fmt=".k")
 
 plt.yscale('log')
@@ -134,13 +128,13 @@ plt.xlabel('k [(Mpc/h)^-1]')
 plt.ylabel('P(k)*k/pi')
 plt.title('Parameter exploration for beta, bias')
 
-pathView.savefig("../Figures/P1D_SamplePaths.pdf")
+pathView.savefig("../Figures/z24_MCMC_NLParams/{q1,q2}/SamplePaths_error10.pdf")
 pathView.show()
 
 # Final results
 cornerplt = corner.corner(samples, labels=["$bp$", "$beta$"],
-                      truths=[bp_f, beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
-cornerplt.savefig("../Figures/P1D_triangleBetaB.png")
+                      truths=[q1_f, q2_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+cornerplt.savefig("../Figures/z24_MCMC_NLParams/{q1,q2}/triangle_error10.png")
 cornerplt.show()
 
 
