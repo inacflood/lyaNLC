@@ -14,22 +14,26 @@ import corner
 #from scipy.stats import norm
 
 # Choose the "true" parameters.
-b_true = -0.134
-beta_true = 1.650
+bp_true = -0.321 
+beta_true = 1.656
 mu=1.0
-betap_true=b_true*(1+beta_true*mu**2)
-print(betap_true)
 
 
 z24=2.4
 cosmo24 = cCAMB.Cosmology(z24)
 th24 = tP3D.TheoryLyaP3D(cosmo24)
 
+def bConvert(beta,bp,mu):
+    """
+    Function to convert our modified beta fitting variable to beta
+    """
+    return bp/(1+beta*mu**2)
+
 # Generate some synthetic data from the model.
 N = 100
 k = np.sort(np.logspace(-4,0.9,N))
 Perr = np.random.rand(N)
-P = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true)
+P = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu))
 P += Perr * np.random.randn(N)
 
 # Plot our synthetic data along with fit from MLE
@@ -42,31 +46,25 @@ plt.ylabel('P(k)')
 
 ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
-def betaConvert(betap,b,mu):
-    """
-    Function to convert our modified beta fitting variable to beta
-    """
-    beta_red=betap/b-1
-    return beta_red/mu**2
 
 # Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):
-    b, betap = theta
-    model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b)
+    bp, beta = theta
+    model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu))
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
 err = 0.2
-var_b=np.abs(b_true)*err
-var_betap=np.abs(betap_true)*err
-min_b=b_true-var_b
-max_b=b_true+var_b
-min_betap=betap_true-var_betap
-max_betap=betap_true+var_betap
+var_bp=np.abs(bp_true)*err
+var_beta=np.abs(beta_true)*err
+min_bp=bp_true-var_bp
+max_bp=bp_true+var_bp
+min_beta=beta_true-var_beta
+max_beta=beta_true+var_beta
 
 
 nll = lambda *args: -lnlike(*args)
-result = op.minimize(nll, [b_true, betap_true], args=(k, P, Perr))
+result = op.minimize(nll, [bp_true, beta_true], args=(k, P, Perr))
                 #, method='L-BFGS-B',bounds=[(min_b,max_b),(min_betap,max_betap)])
 b_ml, betap_ml = result["x"]
 
