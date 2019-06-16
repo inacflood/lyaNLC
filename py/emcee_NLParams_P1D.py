@@ -169,7 +169,7 @@ for w in range(wlks):
 #                                                       str(q2_mcmc))) 
 #file.close() 
 
-print("q1:", q1_mcmc, "q2:", q2_mcmc, "kp:",kp_mcmc)
+#print("q1:", q1_mcmc, "q2:", q2_mcmc, "kp:",kp_mcmc)
 
 
 
