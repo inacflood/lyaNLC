@@ -14,13 +14,17 @@ import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d_woFitsio as npd
 
-nwalkers, nsteps, ndim = np.loadtxt('../Walks/params.dat')
+headFile = "Walks_test2"
+nwalkers, nsteps, ndim, z, err, param_code, runtime = np.loadtxt('../'+headFile+'/params.dat')
 
-nwalkers=300
-nsteps=3000
-ndim=3
-z=2.4
-err = 0.5 # width of the uniform parameter priors
+nwalkers = int(nwalkers)
+nsteps = int(nsteps) 
+ndim = int(ndim)
+#nwalkers=300
+#nsteps=3000
+#ndim=3
+#z=2.4
+#err = 0.5 # width of the uniform parameter priors
 z_str=str(int(z*10)) # for use in file names
 err_str = str(int(err*100))
 
@@ -38,11 +42,11 @@ P = data.Pk_emp()
 Perr = data.Pk_stat 
 
 
-data0=np.loadtxt('../Walks/walk0.dat')
-data1=np.loadtxt('../Walks/walk1.dat')
+data0=np.loadtxt('../'+headFile+'/walk0.dat')
+data1=np.loadtxt('../'+headFile+'/walk1.dat')
 chain=np.stack([data0,data1])
 for w in range(nwalkers-2):
-   data=np.loadtxt('../Walks/walk'+str(w+2)+'.dat')
+   data=np.loadtxt('../'+headFile+'/walk'+str(w+2)+'.dat')
    data=data.reshape((1,nsteps,ndim))
    chain=np.vstack([chain,data])
 
@@ -100,3 +104,4 @@ cornerplt.show()
 q1_mcmc, q2_mcmc, kp_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                             zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0)))
+print("q1:", q1_mcmc, "q2:", q2_mcmc, "kp:",kp_mcmc)
