@@ -14,6 +14,8 @@ import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d_woFitsio as npd
 
+nwalkers, nsteps, ndim = np.loadtxt('../Walks/params.dat')
+
 nwalkers=300
 nsteps=3000
 ndim=3
@@ -75,7 +77,7 @@ param3.show()
 pathView = plt.figure(4)
 samples = chain[:, 50:, :].reshape((-1, ndim))
 
-for q1, q2, kp in samples[np.random.randint(len(samples), size=80)]:
+for q1, q2, kp in samples[np.random.randint(len(samples), size=200)]:
     plt.plot(k, th.makeP1D_P(k_res, q1=q1, q2=q2, kvav=kvav_f, kp=kp, av=av_f, bv=bv_f)*k_res/np.pi, color="k", alpha=0.1)
 plt.plot(k,th.makeP1D_P(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")

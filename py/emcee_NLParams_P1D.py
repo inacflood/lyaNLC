@@ -128,11 +128,13 @@ chain = sampler.chain
 #param3.savefig("../Figures/MCMC_NLParams_3/q1_q2_kp/z"+z_str+"/WalkerPathskp_err"+err_str+".pdf")
 
 
-wlks,itr,ndim = sampler.chain.shape
+paramfile = open('../Walks/params.dat','w')
+paramfile.write('{0} {1} {2} \n'.format(str(nwalkers),str(nsteps),str(ndim)))
+paramfile.close()
 c=sampler.chain
-for w in range(wlks):
+for w in range(nwalkers):
     file=open('../Walks/walk'+str(w)+'.dat','w')
-    for i in range(itr):
+    for i in range(nsteps):
         file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), str(c[w][i][2])))
     file.close()
 #samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
