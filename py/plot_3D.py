@@ -2,6 +2,7 @@ import numpy as np
 import cosmoCAMB as cCAMB
 import theoryLyaP3D as tP3D
 import arinyo2015 as nlclya
+import matplotlib.pyplot as plt
 
 ## Getting started : generate data to plot
 
@@ -79,13 +80,14 @@ plt.rcParams['text.latex.preamble'] = [
 ]
 plt.rc('xtick', labelsize=15)
 plt.rc('ytick', labelsize=15)
-plt.xscale('log')
-plt.yscale('log')
-plt.xlabel(r'k [h $\rm{Mpc}^{-1}$]',fontsize=15)
+
+fig, ax = plt.subplots(1,1, figsize=(7,5))
+ax.set(xscale='log',
+       yscale='log',
+       xlabel=r'k [h $\rm{Mpc}^{-1}$]')
 
 ## plot a comparison between different redshifts
-
-#plt.ylabel(r'$(k/$\pi$)P_{F}(k)$',fontsize=15)
+#ylabel(r'$(k/$\pi$)P_{F}(k)$',fontsize=15)
 
 #plt.plot(k,k * p22_NLC_only / np.pi,'k',alpha=0.6, linewidth=2 ,label=r'$z = 2.2 $')
 #plt.plot(k,k * p24_NLC_only / np.pi,'r',alpha=0.6, linewidth=2 ,label=r'$z = 2.4 $')
@@ -112,20 +114,21 @@ plt.xlabel(r'k [h $\rm{Mpc}^{-1}$]',fontsize=15)
 
 ## plot figure 3 Arinyo 2015 (right)
 
-plt.ylabel(r'$D_{NL}(k,\mu)$',fontsize=15)
-plt.xlim(0.04,10)
-plt.ylim(0.09,4)
-plt.tick_params(width=1.5,length=4)
+ax.set(ylabel=r'$D_{NL}(k,\mu)$',
+       xlim=(0.04,10),
+       ylim=(0.09,4))
+#plt.tick_params(width=1.5,length=4)
 
-plt.plot(k,d_nl_24_000,'k',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.00 $')
-plt.plot(k,d_nl_24_025,'r',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.25 $')
-plt.plot(k,d_nl_24_050,'g',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.50 $')
-plt.plot(k,d_nl_24_075,'b',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.75 $')
-plt.plot(k,d_nl_24_100,'m',alpha=0.6, linewidth=2 ,label=r'$\mu = 1.0 $')
+ax.plot(k,d_nl_24_000,'k',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.00 $')
+ax.plot(k,d_nl_24_025,'r',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.25 $')
+ax.plot(k,d_nl_24_050,'g',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.50 $')
+ax.plot(k,d_nl_24_075,'b',alpha=0.6, linewidth=2 ,label=r'$\mu = 0.75 $')
+ax.plot(k,d_nl_24_100,'m',alpha=0.6, linewidth=2 ,label=r'$\mu = 1.0 $')
 
-plt.title(r"Arinyo 2015 $D_{NL}$, at $z = 2.4$ ",fontsize=15)
-plt.legend(loc='best',fontsize=16)
-plt.savefig("Figures/Arinyo2015_fig3b.pdf")
+ax.set(title=r"Arinyo 2015 $D_{NL}$, at $z = 2.4$ ") #,fontsize=15)
+ax.legend(loc='best',fontsize=16)
+fig.tight_layout()
+#plt.savefig("Figures/Arinyo2015_fig3b.pdf")
 plt.show()
 
 
