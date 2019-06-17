@@ -84,14 +84,14 @@ def lnprob(theta, k, P, Perr):
         return -np.inf
     return lp + lnlike(theta, k, P, Perr)
 
-ndim, nwalkers = 2, 30
+ndim, nwalkers = 2, 300
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 # Run emcee error evaluation
 import emcee
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr),threads=4)
 
-nsteps = 300
+nsteps = 3000
 sampler.run_mcmc(pos, nsteps)
 chain = sampler.chain
 
