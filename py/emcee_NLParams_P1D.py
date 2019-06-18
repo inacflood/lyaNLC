@@ -8,19 +8,21 @@ Created on Tue Jun  4 14:11:57 2019
 import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import scipy.optimize as op
-import corner
+#import corner
 import get_npd_p1d_woFitsio as npd
 import FiducialValues_Arinyo2015 as fv
 import time
+import emcee
+import tqdm
 #from scipy.stats import norm
 
 t = time.process_time()
 
 # Setup initial parameters (you only need to modify z and err here)
-headFile = "Walks_test2"
-z=2.4
+headFile = "Walks_test3"
+z=2.2
 err = 0.5 # width of the uniform parameter priors
 z_str=str(int(z*10)) # for use in file names
 err_str = str(int(err*100))
@@ -84,13 +86,50 @@ def lnprob(theta, k, P, Perr):
         return -np.inf
     return lp + lnlike(theta, k, P, Perr)
 
-ndim, nwalkers = 2, 300
+ndim, nwalkers = 2, 30
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
-# Run emcee error evaluation
-import emcee
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr),threads=4)
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr),threads=4)#, backend=backend)
 
+# Run emcee error evaluation
+
+## Set up the backend
+## Don't forget to clear it in case the file already exists
+#filename = "test2.h5"
+#backend = emcee.backends.HDFBackend(filename)
+#backend.reset(nwalkers, ndim)
+#
+#sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr),threads=4, backend=backend)
+#
+#max_n = 300
+#
+## We'll track how the average autocorrelation time estimate changes
+#index = 0
+#autocorr = np.empty(max_n)
+#
+#old_tau = np.inf
+#
+## Now we'll sample for up to max_n steps
+#for sample in sampler.sample(pos, iterations=max_n, progress=True):
+#    # Only check convergence every 100 steps
+#    if sampler.iteration % 100:
+#        continue
+#
+#    # Compute the autocorrelation time so far
+#    # Using tol=0 means that we'll always get an estimate even
+#    # if it isn't trustworthy
+#    tau = sampler.get_autocorr_time(tol=0)
+#    autocorr[index] = np.mean(tau)
+#    index += 1
+#
+#    # Check convergence
+#    converged = np.all(tau * 100 < sampler.iteration)
+#    converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
+#    if converged:
+#        break
+#    old_tau = tau
+#    
+#nsteps = index
 nsteps = 3000
 sampler.run_mcmc(pos, nsteps)
 chain = sampler.chain
