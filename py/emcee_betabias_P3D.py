@@ -11,6 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as op
 import corner
+import time
+import emcee
+import tqdm
 #from scipy.stats import norm
 
 # Choose the "true" parameters.
@@ -66,11 +69,11 @@ max_beta=beta_true+var_beta
 nll = lambda *args: -lnlike(*args)
 result = op.minimize(nll, [bp_true, beta_true], args=(k, P, Perr))
                 #, method='L-BFGS-B',bounds=[(min_b,max_b),(min_betap,max_betap)])
-b_ml, betap_ml = result["x"]
+bp_ml, beta_ml = result["x"]
 
-result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap_ml,b_ml,mu), b_lya=b_ml)
+result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_ml, b_lya=bConvert(beta_ml, bp_ml,mu))
 ax.plot(k,result_plot)
-fig.savefig("../Figures/IntitalFit_emcee.pdf")
+#fig.savefig("../Figures/IntitalFit_emcee.pdf")
 #print(b_ml, betap_ml)
 
 
@@ -78,8 +81,8 @@ fig.savefig("../Figures/IntitalFit_emcee.pdf")
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
-    b, betap = theta
-    if min_b < b < max_b and min_betap < betap < max_betap:
+    bp, beta = theta
+    if min_bp < bp < max_bp and min_beta < beta < max_beta:
         return 0.0
     return -np.inf
 
@@ -93,28 +96,61 @@ ndim, nwalkers = 2, 100
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 # Run emcee error evaluation
-import emcee
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
 
-sampler.run_mcmc(pos, 500)
+filename = "test2.h5"
+backend = emcee.backends.HDFBackend(filename)
+backend.reset(nwalkers, ndim)
+
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr),threads=4, backend=backend)
+
+max_n = 1000
+
+#sampler.run_mcmc(pos, 500)
+# We'll track how the average autocorrelation time estimate changes
+index = 0
+autocorr = np.empty(max_n)
+
+old_tau = np.inf
+
+# Now we'll sample for up to max_n steps
+for sample in sampler.sample(pos, iterations=max_n, progress=True):
+    # Only check convergence every 100 steps
+    if sampler.iteration % 100:
+        continue
+
+    # Compute the autocorrelation time so far
+    # Using tol=0 means that we'll always get an estimate even
+    # if it isn't trustworthy
+    tau = sampler.get_autocorr_time(tol=0)
+    autocorr[index] = np.mean(tau)
+    index += 1
+
+    # Check convergence
+    converged = np.all(tau * 100 < sampler.iteration)
+    converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
+    if converged:
+        break
+    old_tau = tau
+    
+nsteps = sampler.iteration
 chain = sampler.chain
 
 # Plots to visualize emcee walker paths parameter values
 param1 = plt.figure(2)
-plt.ylabel('bias')
-for w in range(100):
-    plt.plot([chain[w][s][0] for s in range(500)])
+plt.ylabel('bias(1+beta*mu^2)')
+for w in range(nwalkers):
+    plt.plot([chain[w][s][0] for s in range(nsteps)])
     
 param1.show()
-param1.savefig("../Figures/WalkerPathsBias.pdf")
+#param1.savefig("../Figures/WalkerPathsBias.pdf")
 
 param2 = plt.figure(3)
 plt.ylabel('beta')
-for w in range(100):
-    plt.plot([betaConvert(chain[w][s][1],chain[w][s][0],mu) for s in range(500)])
+for w in range(nwalkers):
+    plt.plot([chain[w][s][1] for s in range(nsteps)])
     
 param2.show()
-param2.savefig("../Figures/WalkerPathsBeta.pdf")
+#param2.savefig("../Figures/WalkerPathsBeta.pdf")
 
 
 
@@ -123,9 +159,9 @@ samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 # Plot a few paths against data and intial fit
 pathView = plt.figure(4)
 
-for b, betap in samples[np.random.randint(len(samples), size=100)]:
-    plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = betaConvert(betap,b,mu), b_lya=b), color="k", alpha=0.1)
-plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=b_true), color="r", lw=2, alpha=0.8)
+for bp, beta in samples[np.random.randint(len(samples), size=100)]:
+    plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu)), color="k", alpha=0.1)
+plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu)), color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P, yerr=Perr, fmt=".k")
 
 plt.xscale('log')
@@ -133,13 +169,13 @@ plt.xlabel('k [(Mpc/h)^-1]')
 plt.ylabel('P(k)')
 plt.title('Parameter exploration for beta, bias')
 
-pathView.savefig("../Figures/SamplePaths.pdf")
+#pathView.savefig("../Figures/SamplePaths.pdf")
 pathView.show()
 
 # Final results
-cornerplt = corner.corner(samples, labels=["$b$", "$betap$"],
-                      truths=[b_true, betap_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
-cornerplt.savefig("../Figures/triangleBetaB.png")
+cornerplt = corner.corner(samples, labels=["$bp$", "$beta$"],
+                      truths=[bp_true, beta_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+#cornerplt.savefig("../Figures/triangleBetaB.png")
 cornerplt.show()
 
 
