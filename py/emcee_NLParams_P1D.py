@@ -130,7 +130,7 @@ sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k_res, P, Perr),th
 #    old_tau = tau
 #    
 #nsteps = index
-nsteps = 3000
+nsteps = 300
 sampler.run_mcmc(pos, nsteps)
 chain = sampler.chain
 
