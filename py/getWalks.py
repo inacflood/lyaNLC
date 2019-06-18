@@ -72,8 +72,54 @@ if testingBB:
         
     param2.show()
     #param2.savefig("../Figures/WalkerPathsBeta.pdf")
-    
+       
 else:
+    param1 = plt.figure(1)
+    plt.ylabel('q1')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][0] for s in range(nsteps)])
+        
+    if saveFigs:
+        param1.savefig("../Figures/MCMC_NLParams_3/q1_q2_kp/z"+z_str+"/WalkerPathsq1_err"+err_str+".pdf")
+    param1.show()
+    
+    param2 = plt.figure(2)
+    plt.ylabel('q2')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][1] for s in range(nsteps)])
+    
+    if saveFigs:
+        param2.savefig("../Figures/MCMC_NLParams_3/q1_q2_kp/z"+z_str+"/WalkerPathsq2_err"+err_str+".pdf")
+    param2.show()
+    
+    pathView = plt.figure(4)
+    samples = chain[:, 50:, :].reshape((-1, ndim))
+    
+    for q1,av in samples[np.random.randint(len(samples), size=200)]:
+        plt.plot(k, th.makeP1D_P(k_res, q1=q1, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av, bv=bv_f)*k_res/np.pi, color="k", alpha=0.1)
+    plt.plot(k,th.makeP1D_P(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
+    plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
+    
+    plt.yscale('log')
+    plt.xlabel('k [(Mpc/h)^-1]')
+    plt.ylabel('P(k)*k/pi')
+    plt.title('Parameter exploration for beta, bias')
+    
+    if saveFigs:
+        pathView.savefig("../Figures/MCMC_NLParams_2/q1_av/z"+z_str+"/SamplePaths_err"+err_str+".pdf")
+    pathView.show()
+
+    
+    if params3:
+        param3 = plt.figure(3)
+        plt.ylabel('kp')
+        for w in range(nwalkers):
+            plt.plot([chain[w][s][2] for s in range(nsteps)])
+        if saveFigs:   
+            param3.savefig("../Figures/MCMC_NLParams_3/q1_q2_kp/z"+z_str+"/WalkerPathskp_err"+err_str+".pdf")
+        param3.show()
+
+    
     pathView = plt.figure(4)
     samples = chain[:, 50:, :].reshape((-1, ndim))
     
