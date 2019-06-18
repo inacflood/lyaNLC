@@ -100,7 +100,7 @@ def lnprob(theta, k, P, Perr):
         return -np.inf
     return lp + lnlike(theta, k, P, Perr)
 
-ndim, nwalkers = 2, 100
+ndim, nwalkers = 2, 300
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 # Run emcee error evaluation
