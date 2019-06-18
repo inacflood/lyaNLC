@@ -5,26 +5,32 @@ Created on Tue Jun  4 14:11:57 2019
 
 @author: iflood
 """
-import cosmoCAMB as cCAMB
-import theoryLyaP3D as tP3D
+import cosmoCAMB_newParams as cCAMB
+import theoryLya as tP3D
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import scipy.optimize as op
-import corner
+#import corner
 import time
 import emcee
 import tqdm
 #from scipy.stats import norm
+
+t = time.process_time()
+
+headFile = "BetaBiasPlay"
+z=2.2
+err = 0.5 # width of the uniform parameter priors
+z_str=str(int(z*10)) # for use in file names
+err_str = str(int(err*100))
 
 # Choose the "true" parameters.
 bp_true = -0.321 
 beta_true = 1.656
 mu=1.0
 
-
-z24=2.4
-cosmo24 = cCAMB.Cosmology(z24)
-th24 = tP3D.TheoryLyaP3D(cosmo24)
+cosmo = cCAMB.Cosmology(z)
+th = tP3D.TheoryLyaP3D(cosmo)
 
 def bConvert(beta,bp,mu):
     """
@@ -36,24 +42,24 @@ def bConvert(beta,bp,mu):
 N = 100
 k = np.sort(np.logspace(-4,0.9,N))
 Perr = np.random.rand(N)
-P = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu))
+P = th.FluxP3D_hMpc(z,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu))
 P += Perr * np.random.randn(N)
 
 # Plot our synthetic data along with fit from MLE
-fig = plt.figure(1)
-ax = fig.add_subplot()
-plt.xscale('log')
-plt.yscale('linear')
-plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
-
-ax.errorbar(k,P,yerr=Perr,fmt='k.')
+#fig = plt.figure(1)
+#ax = fig.add_subplot()
+#plt.xscale('log')
+#plt.yscale('linear')
+#plt.xlabel('k [(Mpc/h)^-1]')
+#plt.ylabel('P(k)')
+#
+#ax.errorbar(k,P,yerr=Perr,fmt='k.')
 
 
 # Maximum Likelihood Estimate fit to the synthetic data
 def lnlike(theta, k, P, Perr):
     bp, beta = theta
-    model = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu))
+    model = th.FluxP3D_hMpc(z,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu))
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
@@ -70,9 +76,9 @@ nll = lambda *args: -lnlike(*args)
 result = op.minimize(nll, [bp_true, beta_true], args=(k, P, Perr))
                 #, method='L-BFGS-B',bounds=[(min_b,max_b),(min_betap,max_betap)])
 bp_ml, beta_ml = result["x"]
-
-result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_ml, b_lya=bConvert(beta_ml, bp_ml,mu))
-ax.plot(k,result_plot)
+#
+#result_plot = th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_ml, b_lya=bConvert(beta_ml, bp_ml,mu))
+#ax.plot(k,result_plot)
 #fig.savefig("../Figures/IntitalFit_emcee.pdf")
 #print(b_ml, betap_ml)
 
@@ -92,7 +98,7 @@ def lnprob(theta, k, P, Perr):
         return -np.inf
     return lp + lnlike(theta, k, P, Perr)
 
-ndim, nwalkers = 2, 100
+ndim, nwalkers = 2, 300
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 # Run emcee error evaluation
@@ -103,7 +109,7 @@ backend.reset(nwalkers, ndim)
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr),threads=4, backend=backend)
 
-max_n = 1000
+max_n = 10000
 
 #sampler.run_mcmc(pos, 500)
 # We'll track how the average autocorrelation time estimate changes
@@ -135,49 +141,62 @@ for sample in sampler.sample(pos, iterations=max_n, progress=True):
 nsteps = sampler.iteration
 chain = sampler.chain
 
-# Plots to visualize emcee walker paths parameter values
-param1 = plt.figure(2)
-plt.ylabel('bias(1+beta*mu^2)')
-for w in range(nwalkers):
-    plt.plot([chain[w][s][0] for s in range(nsteps)])
-    
-param1.show()
-#param1.savefig("../Figures/WalkerPathsBias.pdf")
+elapsed_time = time.process_time() - t
 
-param2 = plt.figure(3)
-plt.ylabel('beta')
+paramfile = open('../'+headFile+'/params.dat','w')
+paramfile.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(str(nwalkers),str(nsteps),str(ndim),
+                str(z),str(err),str(0.0),str(elapsed_time)))
+paramfile.close()
+c=sampler.chain
 for w in range(nwalkers):
-    plt.plot([chain[w][s][1] for s in range(nsteps)])
-    
-param2.show()
+    file=open('../'+headFile+'/walk'+str(w)+'.dat','w')
+    for i in range(nsteps):
+        file.write('{0} {1} \n'.format(str(c[w][i][0]), str(c[w][i][1]))) #, str(c[w][i][2])))
+    file.close()
+
+# Plots to visualize emcee walker paths parameter values
+#param1 = plt.figure(2)
+#plt.ylabel('bias(1+beta*mu^2)')
+#for w in range(nwalkers):
+#    plt.plot([chain[w][s][0] for s in range(nsteps)])
+#    
+#param1.show()
+##param1.savefig("../Figures/WalkerPathsBias.pdf")
+#
+#param2 = plt.figure(3)
+#plt.ylabel('beta')
+#for w in range(nwalkers):
+#    plt.plot([chain[w][s][1] for s in range(nsteps)])
+#    
+#param2.show()
 #param2.savefig("../Figures/WalkerPathsBeta.pdf")
 
 
 
-samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
+#samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 
 # Plot a few paths against data and intial fit
-pathView = plt.figure(4)
-
-for bp, beta in samples[np.random.randint(len(samples), size=100)]:
-    plt.plot(k, th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu)), color="k", alpha=0.1)
-plt.plot(k,th24.FluxP3D_hMpc(z24,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu)), color="r", lw=2, alpha=0.8)
-plt.errorbar(k, P, yerr=Perr, fmt=".k")
-
-plt.xscale('log')
-plt.xlabel('k [(Mpc/h)^-1]')
-plt.ylabel('P(k)')
-plt.title('Parameter exploration for beta, bias')
+#pathView = plt.figure(4)
+#
+#for bp, beta in samples[np.random.randint(len(samples), size=100)]:
+#    plt.plot(k, th.FluxP3D_hMpc(z,k,mu,beta_lya = beta, b_lya=bConvert(beta,bp,mu)), color="k", alpha=0.1)
+#plt.plot(k,th.FluxP3D_hMpc(z,k,mu,beta_lya = beta_true, b_lya=bConvert(beta_true,bp_true,mu)), color="r", lw=2, alpha=0.8)
+#plt.errorbar(k, P, yerr=Perr, fmt=".k")
+#
+#plt.xscale('log')
+#plt.xlabel('k [(Mpc/h)^-1]')
+#plt.ylabel('P(k)')
+#plt.title('Parameter exploration for beta, bias')
 
 #pathView.savefig("../Figures/SamplePaths.pdf")
-pathView.show()
-
-# Final results
-cornerplt = corner.corner(samples, labels=["$bp$", "$beta$"],
-                      truths=[bp_true, beta_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
-#cornerplt.savefig("../Figures/triangleBetaB.png")
-cornerplt.show()
-
+#pathView.show()
+#
+## Final results
+#cornerplt = corner.corner(samples, labels=["$bp$", "$beta$"],
+#                      truths=[bp_true, beta_true],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+##cornerplt.savefig("../Figures/triangleBetaB.png")
+#cornerplt.show()
+#
 
 #samples[:, 1] = np.exp(samples[:, 1])
 #b_mcmc, betap_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
