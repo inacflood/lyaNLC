@@ -14,10 +14,10 @@ import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d_woFitsio as npd
 
-headFile = "BetaBiasPlay1D"
+headFile = "Walks_test4"
 saveFigs = False
-params3 = False
-testingBB = True
+params3 = True
+testingBB = False
 nwalkers, nsteps, ndim, z, err, param_code, runtime = np.loadtxt('../'+headFile+'/params.dat')
 
 nwalkers = int(nwalkers)
@@ -32,6 +32,8 @@ z_str=str(int(z*10)) # for use in file names
 err_str = str(int(err*100))
 
 q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fv.getFiducialValues(z)
+bp_f = -0.321
+beta_f = 1.656
 
 cosmo = cCAMB.Cosmology(z)
 th = tLyA.TheoryLyaP3D(cosmo)
@@ -53,7 +55,7 @@ for w in range(nwalkers-2):
    data=data.reshape((1,nsteps,ndim))
    chain=np.vstack([chain,data])
 
-   
+samples = chain[:, 50:, :].reshape((-1, ndim))   
 # Plots to visualize emcee walker paths parameter values
 
 if testingBB:
@@ -84,7 +86,7 @@ else:
     param1.show()
     
     param2 = plt.figure(2)
-    plt.ylabel('q2')
+    plt.ylabel('bp')
     for w in range(nwalkers):
         plt.plot([chain[w][s][1] for s in range(nsteps)])
     
@@ -103,31 +105,30 @@ else:
         param3.show()
     
     pathView = plt.figure(4)
-    samples = chain[:, 50:, :].reshape((-1, ndim))
     
-    for q1,av in samples[np.random.randint(len(samples), size=200)]:
-        plt.plot(k, th.makeP1D_P(k_res, q1=q1, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av, bv=bv_f)*k_res/np.pi, color="k", alpha=0.1)
-    plt.plot(k,th.makeP1D_P(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
-    plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
-    
-    plt.yscale('log')
-    plt.xlabel('k [(Mpc/h)^-1]')
-    plt.ylabel('P(k)*k/pi')
-    plt.title('Parameter exploration for beta, bias')
-    
-    if saveFigs:
-        pathView.savefig("../Figures/MCMC_NLParams_2/q1_av/z"+z_str+"/SamplePaths_err"+err_str+".pdf")
-    pathView.show()
+#    for q1,av in samples[np.random.randint(len(samples), size=200)]:
+#        plt.plot(k, th.makeP1D_P(k_res, q1=q1, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av, bv=bv_f)*k_res/np.pi, color="k", alpha=0.1)
+#    plt.plot(k,th.makeP1D_P(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
+#    plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
+#    
+#    plt.yscale('log')
+#    plt.xlabel('k [(Mpc/h)^-1]')
+#    plt.ylabel('P(k)*k/pi')
+#    plt.title('Parameter exploration for beta, bias')
+#    
+#    if saveFigs:
+#        pathView.savefig("../Figures/MCMC_NLParams_2/q1_av/z"+z_str+"/SamplePaths_err"+err_str+".pdf")
+#    pathView.show()
 
 # Final results
-cornerplt = corner.corner(samples, labels=["$biasMod$", "$beta$"],
-                      truths=[q1_f, av_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+cornerplt = corner.corner(samples, labels=["$q1$", "$bp$", "$kp$"],
+                      truths=[bp_f, beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
 if saveFigs:
     cornerplt.savefig("../Figures/MCMC_NLParams_2/q1_av/z"+z_str+"/triangle_err"+err_str+".pdf")
 cornerplt.show()
 
 
-v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+v1_mcmc, v2_mcmc, v3_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                             zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0)))
-print("bias_mod:", v1_mcmc, "beta:", v2_mcmc)
+print("q1:", v1_mcmc, "bp:", v2_mcmc, "kp:", v3_mcmc)

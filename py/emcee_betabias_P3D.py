@@ -18,7 +18,7 @@ import tqdm
 
 t = time.process_time()
 
-headFile = "BetaBiasPlay"
+headFile = "BetaBiasPlay3D"
 z=2.2
 err = 0.5 # width of the uniform parameter priors
 z_str=str(int(z*10)) # for use in file names
@@ -63,7 +63,7 @@ def lnlike(theta, k, P, Perr):
     inv_sigma2 = 1.0/(Perr**2 + model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-err = 0.2
+err = 0.5
 var_bp=np.abs(bp_true)*err
 var_beta=np.abs(beta_true)*err
 min_bp=bp_true-var_bp
@@ -99,7 +99,10 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 ndim, nwalkers = 2, 300
-pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+#pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+pos_1 = np.random.uniform(min_bp,max_bp,nwalkers)
+pos_2 = np.random.uniform(min_beta,max_beta,nwalkers)
+pos = [[pos_1[i],pos_2[i]] for i in range(nwalkers)]
 
 # Run emcee error evaluation
 

@@ -103,6 +103,7 @@ def lnprob(theta, k, P, Perr):
 ndim, nwalkers = 2, 300
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
+
 # Run emcee error evaluation
 filename = "test2.h5"
 backend = emcee.backends.HDFBackend(filename)
@@ -111,7 +112,7 @@ backend.reset(nwalkers, ndim)
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr),threads=4, backend=backend)
 
-max_n = 10000
+max_n = 6000
 
 # We'll track how the average autocorrelation time estimate changes
 index = 0
