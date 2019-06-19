@@ -8,9 +8,9 @@ Created on Mon Jun  3 16:26:46 2019
 
 
 import numpy as np
-import lya_kaiser_uv_zevol as kailya
-import arinyo2015 as nlclya
-import cosmoCAMB as cCAMB
+import ORG_lya_kaiser_uv_zevol as kailya
+import ORG_arinyo2015 as nlclya
+import ORG_cosmoCAMB as cCAMB
 
 class TheoryLyaP3D(object):
     """

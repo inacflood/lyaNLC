@@ -16,12 +16,15 @@ import FiducialValues_Arinyo2015 as fv
 import time
 import emcee
 import tqdm
+import ptemcee
+from ptemcee.interruptible_pool import Pool
+from ptemcee.
 #from scipy.stats import norm
 
 t = time.process_time()
 
 # Setup initial parameters (you only need to modify z and err here)
-headFile = "Walks_test4"
+headFile = "Play"
 z=2.4
 err = 0.2 # width of the uniform parameter priors
 z_str=str(int(z*10)) # for use in file names
@@ -94,7 +97,7 @@ def lnprob(theta, k, P, Perr):
         return -np.inf
     return lp + lnlike(theta, k, P, Perr)
 
-ndim, nwalkers = 3, 600
+ndim, nwalkers = 3, 60
 pos_1_1 = np.random.uniform(min_1,max_1,nwalkers)
 pos_1_2 = np.random.uniform(min_2,max_2,nwalkers)
 pos_1_3 = np.random.uniform(min_3,max_3,nwalkers)
@@ -112,7 +115,7 @@ pos = [pos_1,pos_2,pos_3]
 betas = np.asarray([0.01, 0.505, 1.0])
 ntemps = len(betas)
 
-sampler = emcee.PTSampler(ntemps, nwalkers, ndim, lnprob, lnprior, loglargs=(k_res, P, Perr), betas=betas,threads=3) 
+sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k_res, P, Perr), betas=betas,mapper=Pool(3).map)#,threads=3) 
 
 # Run emcee error evaluation
 
@@ -154,7 +157,7 @@ sampler = emcee.PTSampler(ntemps, nwalkers, ndim, lnprob, lnprior, loglargs=(k_r
 #    
 #nsteps = sampler.iteration
 
-nsteps = 10000
+nsteps = 100
 sampler.run_mcmc(pos, nsteps)
 
 temp_idx = 2

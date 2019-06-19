@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
-import cosmoCAMB as cCAMB
-import get_npd_p1d_woFitsio as npd
-import theoryLyaP3D as tP3D
+import ORG_cosmoCAMB as cCAMB
+import ORG_get_npd_p1d as npd
+import ORG_theoryLyaP3D as tP3D
 
 
 def log10(x):

@@ -1,7 +1,7 @@
 import numpy as np
-import cosmoCAMB as cCAMB
-import theoryLyaP3D as tP3D
-import arinyo2015 as nlclya
+import ORG_cosmoCAMB as cCAMB
+import ORG_theoryLyaP3D as tP3D
+import ORG_arinyo2015 as nlclya
 import matplotlib.pyplot as plt
 
 ## Getting started : generate data to plot

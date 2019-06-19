@@ -14,7 +14,7 @@ import cosmoCAMB_newParams as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d_woFitsio as npd
 
-headFile = "Walks_test4"
+headFile = "Play"
 saveFigs = False
 params3 = True
 testingBB = False
@@ -122,7 +122,7 @@ else:
 
 # Final results
 cornerplt = corner.corner(samples, labels=["$q1$", "$bp$", "$kp$"],
-                      truths=[bp_f, beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+                      truths=[q1_f,bp_f,kp_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
 if saveFigs:
     cornerplt.savefig("../Figures/MCMC_NLParams_2/q1_av/z"+z_str+"/triangle_err"+err_str+".pdf")
 cornerplt.show()
