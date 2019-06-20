@@ -17,8 +17,8 @@ import time
 import emcee
 import tqdm
 import ptemcee
-from ptemcee.interruptible_pool import Pool
-from ptemcee.
+from ptemcee.sampler import Sampler
+#from ptemcee.interruptible_pool import Pool
 #from scipy.stats import norm
 
 t = time.process_time()
@@ -115,7 +115,7 @@ pos = [pos_1,pos_2,pos_3]
 betas = np.asarray([0.01, 0.505, 1.0])
 ntemps = len(betas)
 
-sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k_res, P, Perr), betas=betas,mapper=Pool(3).map)#,threads=3) 
+sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k_res, P, Perr), betas=betas,threads=3)
 
 # Run emcee error evaluation
 
@@ -165,13 +165,13 @@ chain = sampler.chain[temp_idx][:,:,:]
 
 elapsed_time = time.process_time() - t
 
-paramfile = open('../'+headFile+'/params.dat','w')
+paramfile = open('../output/'+headFile+'/params.dat','w')
 paramfile.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                 str(z),str(err),str(3.1),str(elapsed_time)))
 paramfile.close()
 c=chain
 for w in range(nwalkers):
-    file=open('../'+headFile+'/walk'+str(w)+'.dat','w')
+    file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
     for i in range(nsteps):
         file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), str(c[w][i][2])))
     file.close()
