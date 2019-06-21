@@ -120,10 +120,8 @@ if not P3D:
     plt.xlabel('k [(Mpc/h)^-1]')
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
-
-if saveFigs:
-    pathView.savefig("../Figures/MCMC_KaiserTests/"+headFile+"/z"+z_str+"/SamplePaths_err"+err_str+".pdf")
-pathView.show()
+    pathView.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+    pathView.show()
 
 # Final results
 cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
@@ -131,7 +129,7 @@ cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
 if P3D:
     cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
 else:
-    cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posFSmtT.pdf")
+    cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posSMmtF.pdf")
 cornerplt.show()
 
 
