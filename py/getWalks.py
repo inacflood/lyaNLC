@@ -131,7 +131,7 @@ cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
 if P3D:
     cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
 else:
-    cornerplt.savefig("../Figures/MCMC_KaiserTests/"+headFile+"/z"+z_str+"/triangle_err"+err_str+"posFSmtF.pdf")
+    cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posFSmtT.pdf")
 cornerplt.show()
 
 
