@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run4"
+headFile = "run5"
 saveFigs = True
 testingBB = False
 P3D = False
@@ -16,14 +16,13 @@ if P3D:
     mu_str = str(int(mu*10))
     beta_f = 1.650
     b_f = -0.134
-    bp_f = (1+beta_f*mu**2)*b_f
 else:
     nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
 #    beta_f = 1.650
 #    b_f = -0.134
 #    bp_f = b_f*(1+beta_f)
     
-    bp_f=1.650
+    beta_f=1.650
     b_f = -0.134
 
 nwalkers = int(nwalkers)
@@ -39,13 +38,23 @@ th = tLyA.TheoryLya(cosmo)
 dkMz = th.cosmo.dkms_dhMpc(z) #
 
 # Get actual data
-data = npd.LyA_P1D(z)
-k = data.k
-ii = np.where((data.k<=0.6/dkMz))[0] # Perform the cut on the data
-k = data.k[ii]
-P = data.Pk[ii]
-Perr = data.Pk_stat[ii]
-k_res = k*dkMz
+if testingBB:
+    
+    data = npd.LyA_P1D(z)
+    k = data.k
+    ii = np.where((data.k<=0.6/dkMz))[0] # Perform the cut on the data
+    k = data.k[ii]
+    P = data.Pk[ii]
+    Perr = data.Pk_stat[ii]
+    k_res = k*dkMz
+    
+else:
+    
+    data = npd.LyA_P1D(z)
+    k = data.k
+    P = data.Pk
+    Perr = data.Pk_stat
+    k_res = k*dkMz
 
 data0=np.loadtxt('../output/'+headFile+'/walk0.dat')
 data1=np.loadtxt('../output/'+headFile+'/walk1.dat')
@@ -55,7 +64,7 @@ for w in range(nwalkers-2):
    data=data.reshape((1,nsteps,ndim))
    chain=np.vstack([chain,data])
 
-samples = chain[:, 50:, :].reshape((-1, ndim))
+samples = chain[:, 2:, :].reshape((-1, ndim))
 # Plots to visualize emcee walker paths parameter values
 
 if testingBB:
@@ -68,7 +77,7 @@ if testingBB:
     #param1.savefig("../Figures/WalkerPathsBias.pdf")
 
     param2 = plt.figure(3)
-    plt.ylabel('bias(1+beta[*mu^2])')
+    plt.ylabel('beta')
     for w in range(nwalkers):
         plt.plot([chain[w][s][1] for s in range(nsteps)])
 
@@ -86,7 +95,7 @@ else:
     param1.show()
 
     param2 = plt.figure(2)
-    plt.ylabel('bp')
+    plt.ylabel('q2')
     for w in range(nwalkers):
         plt.plot([chain[w][s][1] for s in range(nsteps)])
 
@@ -128,7 +137,7 @@ else:
     
 if testingBB and (not P3D):
     pathView = plt.figure(4)
-    for b,bp in samples[np.random.randint(len(samples), size=200)]:
+    for b,beta in samples[np.random.randint(len(samples), size=200)]:
         plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=bp)*k_res/np.pi, color="b", alpha=0.1)
     plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz)*k_res/np.pi, color="r", lw=2, alpha=0.8)
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
@@ -163,8 +172,8 @@ if not testingBB:
 # Final results
 if testingBB:
     
-    cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
-                          truths=[b_f,bp_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+    cornerplt = corner.corner(samples, labels=["$b$", "$beta$"],
+                          truths=[b_f,beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
     
     if P3D:
         cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
@@ -175,7 +184,7 @@ if testingBB:
     v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                             zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0)))
-    print("b:", v1_mcmc, "bp:", v2_mcmc)
+    print("b:", v1_mcmc, "beta:", v2_mcmc)
     
 else:
     

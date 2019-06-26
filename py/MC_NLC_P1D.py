@@ -12,7 +12,7 @@ from ptemcee.sampler import Sampler
 
 t = time.process_time()
 
-headFile = "run4"
+headFile = "run5"
 z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 2 # emcee starts 1:from a small ball, 2:in full param space
@@ -30,10 +30,9 @@ dkMz = th.cosmo.dkms_dhMpc(z)
 
 # Get actual data
 data = npd.LyA_P1D(z)
-ii = np.where((data.k<=0.6/dkMz))[0] # Perform the cut on the data
-k = data.k[ii]
-P = data.Pk[ii]
-Perr = data.Pk_stat[ii]
+k = data.k
+P = data.Pk
+Perr = data.Pk_stat
 k_res = k*dkMz
 
 # Maximum Likelihood Estimate fit to the synthetic data
@@ -71,7 +70,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 6, 250
+ndim, nwalkers = 6, 12
 
 if multiT:
     if pos_method==1:
@@ -157,14 +156,14 @@ if convTest: # walker paths will be stored in backend and periodically checked f
     chain = sampler.chain
     
 elif multiT:
-    nsteps = 500
+    nsteps = 50
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
     
 else:
-    nsteps = 500
+    nsteps = 50
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain

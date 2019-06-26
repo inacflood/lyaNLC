@@ -22,7 +22,7 @@ convTest = (not multiT) and False # convergence test cannot be run with multiTem
 # Choose the "true" parameters.
 #q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
 
-bp_f = 1.650
+beta_f = 1.650
 b_f = -0.134
 
 cosmo = cCAMB.Cosmology(z)
@@ -40,8 +40,8 @@ k_res = k*dkMz
 # Maximum Likelihood Estimate fit to the synthetic data
 
 def lnlike(theta, k, P, Perr):
-    b, bp = theta
-    model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=bp)*dkMz
+    b, beta = theta
+    model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta)*dkMz
 #        q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav_f, av=av_f, bv=bv_f)
     inv_sigma2 = 1.0/(Perr**2)#+ model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
@@ -54,10 +54,10 @@ def lnlike(theta, k, P, Perr):
 #    return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
 
-var_bp = np.abs(bp_f)*err
+var_beta = np.abs(beta_f)*err
 var_b = np.abs(b_f)*err
-min_bp = bp_f-var_bp
-max_bp = bp_f+var_bp
+min_beta = 0.4
+max_beta = 2.5
 min_b = b_f-var_b
 max_b = b_f+var_b
 
@@ -69,8 +69,8 @@ max_b = b_f+var_b
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
-    b, bp = theta
-    if min_bp < bp < max_bp and min_b < b < max_b:
+    b, beta = theta
+    if min_beta < beta < max_beta and min_b < b < max_b:
         return 0.0
     return -np.inf
 
@@ -85,27 +85,27 @@ ndim, nwalkers = 2, 12
 
 if multiT:
     if pos_method==1:
-        pos_1 = [[b_f,bp_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-        pos_2 = [[b_f,bp_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-        pos_3 = [[b_f,bp_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+        pos_1 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+        pos_2 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+        pos_3 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
         pos = [pos_1,pos_2,pos_3]
     else:
         pos_1_1 = np.random.uniform(min_b,max_b,nwalkers)
-        pos_1_2 = np.random.uniform(min_bp,max_bp,nwalkers)
+        pos_1_2 = np.random.uniform(min_beta,max_beta,nwalkers)
         pos_1 = [[pos_1_1[i],pos_1_2[i]] for i in range(nwalkers)]
         pos_2_1 = np.random.uniform(min_b,max_b,nwalkers)
-        pos_2_2 = np.random.uniform(min_bp,max_bp,nwalkers)
+        pos_2_2 = np.random.uniform(min_beta,max_beta,nwalkers)
         pos_2 = [[pos_2_1[i],pos_2_2[i]] for i in range(nwalkers)]
         pos_3_1 = np.random.uniform(min_b,max_b,nwalkers)
-        pos_3_2 = np.random.uniform(min_bp,max_bp,nwalkers)
+        pos_3_2 = np.random.uniform(min_beta,max_beta,nwalkers)
         pos_3 = [[pos_3_1[i],pos_3_2[i]] for i in range(nwalkers)]
         pos = [pos_1,pos_2,pos_3]
 else:
     if pos_method==1:
-        pos = [[b_f,bp_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+        pos = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
     else:
         pos_1 = np.random.uniform(min_b,max_b,nwalkers)
-        pos_2 = np.random.uniform(min_bp,max_bp,nwalkers)
+        pos_2 = np.random.uniform(min_beta,max_beta,nwalkers)
         pos = [[pos_1[i],pos_2[i]] for i in range(nwalkers)]
 
 # Run emcee error evaluation
