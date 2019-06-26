@@ -12,7 +12,7 @@ from ptemcee.sampler import Sampler
 
 t = time.process_time()
 
-headFile = "run5"
+headFile = "run4"
 z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 2 # emcee starts 1:from a small ball, 2:in full param space

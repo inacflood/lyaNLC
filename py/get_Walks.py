@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run5"
+headFile = "run4"
 saveFigs = True
 testingBB = False
 P3D = False
