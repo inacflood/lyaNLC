@@ -81,7 +81,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 2, 30
+ndim, nwalkers = 2, 12
 
 if multiT:
     if pos_method==1:
@@ -150,13 +150,13 @@ if convTest: # walker paths will be stored in backend and periodically checked f
     nsteps = sampler.iteration
     chain = sampler.chain
 elif multiT:
-    nsteps = 500
+    nsteps = 50#500
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
 else:
-    nsteps = 500
+    nsteps = 50#500
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain
