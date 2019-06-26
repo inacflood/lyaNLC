@@ -64,7 +64,7 @@ for w in range(nwalkers-2):
    data=data.reshape((1,nsteps,ndim))
    chain=np.vstack([chain,data])
 
-samples = chain[:, 2:, :].reshape((-1, ndim))
+samples = chain[:, 50:, :].reshape((-1, ndim))
 # Plots to visualize emcee walker paths parameter values
 
 if testingBB:
