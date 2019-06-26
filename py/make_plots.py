@@ -50,8 +50,8 @@ def plot_3D(z_list,mu=1.0,linear=False,uv=False,zevol=True):
 
     fig = plt.figure(figsize=(10,6))
     ax = fig.add_subplot(1, 1, 1)
-    ax.set_xlabel(r'$k\,\left(\rm km/s\right)^{-1}$', fontsize=16)
-    ax.set_ylabel(r'k [h $\rm{Mpc}^{-1}$]', fontsize=16)
+    ax.set_ylabel(r'$k\,\left(\rm km/s\right)^{-1}$', fontsize=16)
+    ax.set_xlabel(r'$(k/$\pi$)P_{F}(k)$', fontsize=16)
     plt.xscale('log')
     plt.yscale('log')
     plt.tick_params(length=10,width=1.2,which='major')
@@ -71,6 +71,44 @@ def plot_3D(z_list,mu=1.0,linear=False,uv=False,zevol=True):
 
     plt.legend(loc='best')
     plt.savefig("../Figures/P3D_data_v_model_"+spe2+".pdf")
+
+def plot_Arinyo(z,mu_list,option=1):
+
+    """
+    Plots similar to Figure 7 of Arinyo (2015).
+
+    """
+
+    fig = plt.figure(figsize=(8,8))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_ylabel(r'$k\,\left(\rm km/s\right)^{-1}$', fontsize=16)
+    ax.set_xlabel(r'$P_{F}(k) / P_{L}(k)$', fontsize=16)
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlim(0.09,10.)
+    plt.tick_params(length=10,width=1.2,which='major')
+    plt.tick_params(length=5,width=.9,which='minor')
+    plt.title("Arinyo figure for $z$ = "+str(z))
+
+
+    k=np.logspace(-4,0.9,1000)
+
+    c=0
+    for mu in mu_list:
+        cosmo = cCAMB.Cosmology(z)
+        th = thLya.TheoryLya(cosmo)
+        model_nlc = th.FluxP3D_hMpc(z,k,mu,linear=False,uv=False,zevol=True)
+        model_lin = th.FluxP3D_hMpc(z,k,mu,linear=True,uv=False,zevol=True)
+
+        if option == 1:
+            plt.plot(k, model_nlc / model_lin, color=tableau10blind[c], linewidth=2 ,label=r'$\mu$ = '+str(mu))
+        elif option ==0:
+            plt.plot(k, model_nlc / th.linPk(k), color=tableau10blind[c], linewidth=2 ,label=r'$\mu$ = '+str(mu))
+
+        c=c+1
+
+    plt.legend(loc='best')
+    plt.savefig("../Figures/Arinyo_"+str(option)+".pdf")
 
 def plot_p1d_ft():
 
