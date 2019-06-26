@@ -23,12 +23,29 @@ def D_v_hMpc(k_hMpc,mu,kvav=0.48,av=0.156,bv=1.57):
 
 def D_hMpc_AiP2015(k_hMpc,mu,Pk_lin,q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,bv=1.57):
 	"""
-	Returns the corrective term D_nl (also noted F_nl in Bautista et al 2017a and dMdB et al 2017) at redshift 2.4 
+	Returns the corrective term D_nl (also noted F_nl in Bautista et al 2017a and dMdB et al 2017) at redshift 2.4
 	Corrected 3D power is P3D(k,mu;z) x Dnl(k,mu;z) .
 
-	Analytical formula : eq(3.6) of Arinyo-i-Prats et al 2015 [arXiv:1506.04519] 
+	Analytical formula : eq(3.6) of Arinyo-i-Prats et al 2015 [arXiv:1506.04519]
 	"""
 
-	to_exp = D_NL_hMpc(k_hMpc,Pk_lin,q1,q2) *  D_v_hMpc(k_hMpc,mu,kvav,av) - D_p_hMpc(k_hMpc,kp)
+	to_exp = D_NL_hMpc(k_hMpc,Pk_lin,q1,q2) *  D_v_hMpc(k_hMpc,mu,kvav=kvav,av=av) - D_p_hMpc(k_hMpc,kp=kp)
 
-	return np.exp(to_exp) 
+	return np.exp(to_exp)
+
+def getFiducialValues(z):
+    q1, q2, kvav, kp, av, bv = np.zeros(6)
+    if z==2.2:
+        q1, q2, kp, kvav, av, bv = [0.090, 0.316, 8.9, 0.493, 0.145, 1.54]
+    elif z==2.4:
+        q1, q2, kp, kvav, av, bv = [0.057, 0.368, 9.2, 0.480, 0.156, 1.57]
+    elif z==2.6:
+        q1, q2, kp, kvav, av, bv = [0.068, 0.390, 9.6, 0.483, 0.190, 1.61]
+    elif z==2.8:
+        q1, q2, kp, kvav, av, bv = [0.086, 0.417, 9.9, 0.493, 0.217, 1.63]
+    elif z==3.0:
+        q1, q2, kp, kvav, av, bv = [0.104, 0.444, 10.1, 0.516, 0.248, 1.66]
+    else:
+        print("Invalid z-value")
+        return
+    return q1, q2, kp, kvav, av, bv
