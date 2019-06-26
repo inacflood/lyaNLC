@@ -6,10 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run1"
-saveFigs = False
-params3 = False
-testingBB = True
+headFile = "run4"
+saveFigs = True
+testingBB = False
 P3D = False
 
 if P3D:
@@ -20,9 +19,12 @@ if P3D:
     bp_f = (1+beta_f*mu**2)*b_f
 else:
     nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
-    beta_f = 1.650
+#    beta_f = 1.650
+#    b_f = -0.134
+#    bp_f = b_f*(1+beta_f)
+    
+    bp_f=1.650
     b_f = -0.134
-    bp_f = b_f*(1+beta_f)
 
 nwalkers = int(nwalkers)
 nsteps = int(nsteps)
@@ -30,10 +32,10 @@ ndim = int(ndim)
 z_str = str(int(z*10)) # for use in file names
 err_str = str(int(err*100))
 
-#q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
+q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
 
 cosmo = cCAMB.Cosmology(z)
-th = tLyA.TheoryLyaP3D(cosmo)
+th = tLyA.TheoryLya(cosmo)
 dkMz = th.cosmo.dkms_dhMpc(z) #
 
 # Get actual data
@@ -80,7 +82,7 @@ else:
         plt.plot([chain[w][s][0] for s in range(nsteps)])
 
     if saveFigs:
-        param1.savefig("../Figures/MCMC_KaiserTests/"+headFile+"/z"+z_str+"/WalkerPathsq1_err"+err_str+".pdf")
+        param1.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq1_err"+err_str+".pdf")
     param1.show()
 
     param2 = plt.figure(2)
@@ -89,49 +91,104 @@ else:
         plt.plot([chain[w][s][1] for s in range(nsteps)])
 
     if saveFigs:
-        param2.savefig("../Figures/MCMC_KaiserTests/"+headFile+"/z"+z_str+"/WalkerPathsq2_err"+err_str+".pdf")
+        param2.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq2_err"+err_str+".pdf")
     param2.show()
 
-
-    if params3:
-        param3 = plt.figure(3)
-        plt.ylabel('kp')
-        for w in range(nwalkers):
-            plt.plot([chain[w][s][2] for s in range(nsteps)])
-        if saveFigs:
-            param3.savefig("../Figures/MCMC_KaiserTests/q1_q2_kp/z"+z_str+"/WalkerPathskp_err"+err_str+".pdf")
-        param3.show()
-if not P3D:
+    param3 = plt.figure(3)
+    plt.ylabel('kp')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][2] for s in range(nsteps)])
+    if saveFigs:
+        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskp_err"+err_str+".pdf")
+    param3.show()
+    
+    param4 = plt.figure(4)
+    plt.ylabel('kp')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][3] for s in range(nsteps)])
+    if saveFigs:
+        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskvav_err"+err_str+".pdf")
+    param3.show()
+    
+    param5 = plt.figure(5)
+    plt.ylabel('kp')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][4] for s in range(nsteps)])
+    if saveFigs:
+        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsav_err"+err_str+".pdf")
+    param3.show()
+    
+    param6 = plt.figure(6)
+    plt.ylabel('kp')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][5] for s in range(nsteps)])
+    if saveFigs:
+        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
+    param3.show()
+    
+if testingBB and (not P3D):
     pathView = plt.figure(4)
-
-#    for b,bp in samples[np.random.randint(len(samples), size=200)]:
-#        plt.plot(k, th.FluxP1D_hMpc(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f, b_lya=b, beta_lya=(bp/b-1))*k_res/np.pi, color="k", alpha=0.1)
-#    plt.plot(k,th.FluxP1D_hMpc(k_res, q1=q1_f, q2=q2_f, kvav=kvav_f, kp=kp_f, av=av_f, bv=bv_f, b_lya=b_f, beta_lya=beta_f)*k_res/np.pi, color="r", lw=2, alpha=0.8)
-#    plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
-
     for b,bp in samples[np.random.randint(len(samples), size=200)]:
-        plt.plot(k, th.FluxP1D_hMpc(k*dkMz, z, b_lya=b, beta_lya=(bp/b-1))*k_res/np.pi, color="k", alpha=0.1)
-    plt.plot(k,th.FluxP1D_hMpc(k*dkMz,z)*k_res/np.pi, color="r", lw=2, alpha=0.8)
+        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=bp)*k_res/np.pi, color="b", alpha=0.1)
+    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz)*k_res/np.pi, color="r", lw=2, alpha=0.8)
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
     plt.yscale('log')
     plt.xlabel('k [(Mpc/h)^-1]')
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
-    #pathView.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
     pathView.show()
+    
+if not testingBB:
+    
+    pathView = plt.figure(7)
+    
+    for q1,q2,kp,kvav,av,bv in samples[np.random.randint(len(samples), size=200)]:
+        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*k_res/np.pi
+                 , color="b", alpha=0.1)
+    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f,q2=q2_f,kp=kp_f,kvav=kvav_f,av=av_f,bv=bv_f)*k_res/np.pi
+             , color="r", lw=2, alpha=0.8)
+    plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
+
+    plt.yscale('log')
+    plt.xlabel('k [(Mpc/h)^-1]')
+    plt.ylabel('P(k)*k/pi')
+    plt.title('Parameter exploration for beta, bias')
+    
+    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+    pathView.show()
+    
 
 # Final results
-cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
-                      truths=[b_f,bp_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
-#if P3D:
-#    cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
-#else:
-#    cornerplt.savefig("../Figures/MCMC_KaiserTests/Kaiser/z"+z_str+"/triangle_err"+err_str+"posSMmtF.pdf")
-#cornerplt.show()
-
-
-v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+if testingBB:
+    
+    cornerplt = corner.corner(samples, labels=["$b$", "$bp$"],
+                          truths=[b_f,bp_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+    
+    if P3D:
+        cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
+    else:
+        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posFSmtT.pdf")
+    cornerplt.show()
+    
+    v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                             zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0)))
-print("b:", v1_mcmc, "bp:", v2_mcmc)
+    print("b:", v1_mcmc, "bp:", v2_mcmc)
+    
+else:
+    
+   cornerplt = corner.corner(samples, labels=["$q1$", "$q2$", "$kp$", "$kvav$", "$av$", "$bv$"],
+                truths=[q1_f,q2_f,kp_f,kvav_f,av_f,bv_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+   
+   cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posFSmtT.pdf")
+   cornerplt.show()
+   v1_mcmc, v2_mcmc, v3_mcmc, v4_mcmc, v5_mcmc, v6_mcmc = map(lambda v: 
+               (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
+    
+   print("q1:", v1_mcmc, "q2:", v2_mcmc, "kp:", v3_mcmc, "kvav:", v4_mcmc, 
+         "av:", v5_mcmc, "bv:", v6_mcmc) 
+
+
+

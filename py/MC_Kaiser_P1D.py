@@ -12,27 +12,21 @@ from ptemcee.sampler import Sampler
 
 t = time.process_time()
 
-headFile = "run1"
-z=2.2
-err = 2.0 # width of the uniform parameter priors
+headFile = "run4"
+z=2.4
+err = 0.5 # width of the uniform parameter priors
 pos_method = 1 # emcee starts 1:from a small ball, 2:in full param space
-multiT = True # when True, MCMC will be run at 3 temperatures set in 'betas'
+multiT = False # when True, MCMC will be run at 3 temperatures set in 'betas'
 convTest = (not multiT) and False # convergence test cannot be run with multiTempering
 
 # Choose the "true" parameters.
-def bConvert(bp,b):
-    """
-    Function to convert our modified beta fitting variable to beta
-    """
-    return bp/b-1
-
-beta_f = 1.650
-b_f = -0.134
-bp_f = b_f*(1+beta_f)
 #q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
 
+bp_f = 1.650
+b_f = -0.134
+
 cosmo = cCAMB.Cosmology(z)
-th = tLyA.TheoryLyaP3D(cosmo)
+th = tLyA.TheoryLya(cosmo)
 dkMz = th.cosmo.dkms_dhMpc(z)
 
 # Get actual data
@@ -47,9 +41,9 @@ k_res = k*dkMz
 
 def lnlike(theta, k, P, Perr):
     b, bp = theta
-    model = th.FluxP1D_hMpc(k*dkMz, z, b_lya=b, beta_lya=bConvert(b,bp))
+    model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=bp)*dkMz
 #        q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav_f, av=av_f, bv=bv_f)
-    inv_sigma2 = 1.0/(Perr**2 + model**2)
+    inv_sigma2 = 1.0/(Perr**2)#+ model**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
 #def lnlike(theta, k_res, P, Perr):
@@ -87,7 +81,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 2, 100
+ndim, nwalkers = 2, 30
 
 if multiT:
     if pos_method==1:
@@ -156,13 +150,13 @@ if convTest: # walker paths will be stored in backend and periodically checked f
     nsteps = sampler.iteration
     chain = sampler.chain
 elif multiT:
-    nsteps = 2000
+    nsteps = 500
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
 else:
-    nsteps = 300
+    nsteps = 500
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain
