@@ -6,9 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run4"
+headFile = "run6"
 saveFigs = True
-testingBB = False
+testingBB = True
 P3D = False
 
 if P3D:
@@ -73,16 +73,18 @@ if testingBB:
     for w in range(nwalkers):
         plt.plot([chain[w][s][0] for s in range(nsteps)])
 
+    if saveFigs:
+        param1.savefig("../output/"+headFile+"/WalkerPathsBias.pdf")
     param1.show()
-    #param1.savefig("../Figures/WalkerPathsBias.pdf")
-
+    
     param2 = plt.figure(3)
     plt.ylabel('beta')
     for w in range(nwalkers):
         plt.plot([chain[w][s][1] for s in range(nsteps)])
 
+    if saveFigs:
+        param2.savefig("../output/"+headFile+"/WalkerPathsBeta.pdf")
     param2.show()
-    #param2.savefig("../Figures/WalkerPathsBeta.pdf")
 
 else:
     param1 = plt.figure(1)
@@ -112,7 +114,7 @@ else:
     param3.show()
     
     param4 = plt.figure(4)
-    plt.ylabel('kp')
+    plt.ylabel('kvav')
     for w in range(nwalkers):
         plt.plot([chain[w][s][3] for s in range(nsteps)])
     if saveFigs:
@@ -120,7 +122,7 @@ else:
     param3.show()
     
     param5 = plt.figure(5)
-    plt.ylabel('kp')
+    plt.ylabel('av')
     for w in range(nwalkers):
         plt.plot([chain[w][s][4] for s in range(nsteps)])
     if saveFigs:
@@ -128,7 +130,7 @@ else:
     param3.show()
     
     param6 = plt.figure(6)
-    plt.ylabel('kp')
+    plt.ylabel('bv')
     for w in range(nwalkers):
         plt.plot([chain[w][s][5] for s in range(nsteps)])
     if saveFigs:
@@ -146,7 +148,7 @@ if testingBB and (not P3D):
     plt.xlabel('k [(Mpc/h)^-1]')
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
-    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSBmtF.pdf")
     pathView.show()
     
 if not testingBB:
@@ -176,9 +178,9 @@ if testingBB:
                           truths=[b_f,beta_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
     
     if P3D:
-        cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posFSmtTmu"+mu_str+".pdf")
+        cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posSBmtFmu"+mu_str+".pdf")
     else:
-        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posFSmtT.pdf")
+        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posSBmtF.pdf")
     cornerplt.show()
     
     v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),

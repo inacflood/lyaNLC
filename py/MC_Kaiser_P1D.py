@@ -9,10 +9,15 @@ import tqdm
 import get_npd_p1d as npd
 import ptemcee
 from ptemcee.sampler import Sampler
+import os
 
 t = time.process_time()
 
-headFile = "run4"
+# Make a directory to store the sampling data and parameters
+headFile = "run6"
+if not os.path.exists('../output/'+headFile):
+    os.makedirs('../output/'+headFile)
+    
 z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 1 # emcee starts 1:from a small ball, 2:in full param space
@@ -42,8 +47,7 @@ k_res = k*dkMz
 def lnlike(theta, k, P, Perr):
     b, beta = theta
     model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta)*dkMz
-#        q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav_f, av=av_f, bv=bv_f)
-    inv_sigma2 = 1.0/(Perr**2)#+ model**2)
+    inv_sigma2 = 1.0/(Perr**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
 #def lnlike(theta, k_res, P, Perr):
@@ -81,7 +85,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 2, 12
+ndim, nwalkers = 2, 100
 
 if multiT:
     if pos_method==1:
@@ -150,13 +154,13 @@ if convTest: # walker paths will be stored in backend and periodically checked f
     nsteps = sampler.iteration
     chain = sampler.chain
 elif multiT:
-    nsteps = 50#500
+    nsteps = 300
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
 else:
-    nsteps = 50#500
+    nsteps = 300
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain

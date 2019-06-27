@@ -12,7 +12,11 @@ from ptemcee.sampler import Sampler
 
 t = time.process_time()
 
-headFile = "run4"
+# Make a directory to store the sampling data and parameters
+headFile = "run5"
+if not os.path.exists('../output/'+headFile):
+    os.makedirs('../output/'+headFile)
+    
 z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 2 # emcee starts 1:from a small ball, 2:in full param space
@@ -70,7 +74,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 6, 250
+ndim, nwalkers = 6, 300
 
 if multiT:
     if pos_method==1:
@@ -156,14 +160,14 @@ if convTest: # walker paths will be stored in backend and periodically checked f
     chain = sampler.chain
     
 elif multiT:
-    nsteps = 500
+    nsteps = 1000
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
     
 else:
-    nsteps = 500
+    nsteps = 1000
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain
