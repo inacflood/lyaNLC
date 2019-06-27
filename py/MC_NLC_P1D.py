@@ -144,8 +144,7 @@ if convTest: # walker paths will be stored in backend and periodically checked f
             continue
 
         # Compute the autocorrelation time so far
-        # Using tol=0 means that we'll always get an estimate even
-        # if it isn't trustworthy
+        # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
         tau = sampler.get_autocorr_time(tol=0)
         autocorr[index] = np.mean(tau)
         index += 1
@@ -175,6 +174,7 @@ else:
 
 elapsed_time = time.process_time() - t
 
+# Write walker paths to files, along with the fitting parameters
 paramfile = open('../output/'+headFile+'/params.dat','w')
 paramfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                 str(z),str(err),str(elapsed_time)))

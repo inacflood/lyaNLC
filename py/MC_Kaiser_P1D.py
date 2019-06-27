@@ -22,7 +22,8 @@ z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 1 # emcee starts 1:from a small ball, 2:in full param space
 multiT = False # when True, MCMC will be run at 3 temperatures set in 'betas'
-convTest = (not multiT) and False # convergence test cannot be run with multiTempering
+CTSwitch = False
+convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
 linear = 1
 
 # Choose the "true" parameters.
@@ -51,13 +52,6 @@ def lnlike(theta, k, P, Perr):
     inv_sigma2 = 1.0/(Perr**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-#def lnlike(theta, k_res, P, Perr):
-#    bp, beta = theta
-#    model = th.FluxP1D_hMpc(k_res, b_lya=bConvert(bp,beta), beta_lya=betaConvert(b,bp),
-#        q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav_f, av=av_f, bv=bv_f)*k_res/np.pi
-#    inv_sigma2 = 1.0/(Perr**2 + model**2)
-#    return -0.5*(np.sum((P-model)**2*inv_sigma2))
-
 
 var_beta = np.abs(beta_f)*err
 var_b = np.abs(b_f)*err
@@ -65,11 +59,6 @@ min_beta = 0.4
 max_beta = 2.5
 min_b = b_f-var_b
 max_b = b_f+var_b
-
-#nll = lambda *args: -lnlike(*args)
-#result = op.minimize(nll, [bp_f, beta_f], args=(k_res, P, Perr),method='L-BFGS-B',bounds=[(min_bp,max_bp),(min_beta,max_beta)])
-#bp_ml, beta_ml = result["x"]
-
 
 # Set up MLE for emcee error evaluation
 
@@ -125,7 +114,6 @@ if convTest: # walker paths will be stored in backend and periodically checked f
 
     max_n = 10000
 
-    #sampler.run_mcmc(pos, 500)
     # We'll track how the average autocorrelation time estimate changes
     index = 0
     autocorr = np.empty(max_n)
@@ -139,8 +127,7 @@ if convTest: # walker paths will be stored in backend and periodically checked f
             continue
 
         # Compute the autocorrelation time so far
-        # Using tol=0 means that we'll always get an estimate even
-        # if it isn't trustworthy
+        # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
         tau = sampler.get_autocorr_time(tol=0)
         autocorr[index] = np.mean(tau)
         index += 1
@@ -154,12 +141,14 @@ if convTest: # walker paths will be stored in backend and periodically checked f
 
     nsteps = sampler.iteration
     chain = sampler.chain
+    
 elif multiT:
     nsteps = 300
     betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
     sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
     sampler.run_mcmc(pos, nsteps)
     chain = sampler.chain[2][:,:,:]
+    
 else:
     nsteps = 300
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
@@ -168,7 +157,7 @@ else:
 
 elapsed_time = time.process_time() - t
 
-
+# Write walker paths to files, along with the fitting parameters
 paramfile = open('../output/'+headFile+'/params.dat','w')
 paramfile.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                 str(z),str(err),str(linear),str(elapsed_time)))
@@ -177,5 +166,5 @@ c=chain
 for w in range(nwalkers):
     file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
     for i in range(nsteps):
-        file.write('{0} {1} \n'.format(str(c[w][i][0]), str(c[w][i][1]))) #, str(c[w][i][2])))
+        file.write('{0} {1} \n'.format(str(c[w][i][0]), str(c[w][i][1]))) 
     file.close()
