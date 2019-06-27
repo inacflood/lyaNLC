@@ -8,7 +8,7 @@ import get_npd_p1d as npd
 
 headFile = "run6"
 saveFigs = True
-testingBB = True
+testingBB = False
 P3D = False
 
 if P3D:
