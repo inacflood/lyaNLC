@@ -14,7 +14,7 @@ import os
 t = time.process_time()
 
 # Make a directory to store the sampling data and parameters
-headFile = "run6"
+headFile = "run7"
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
@@ -23,6 +23,7 @@ err = 0.5 # width of the uniform parameter priors
 pos_method = 1 # emcee starts 1:from a small ball, 2:in full param space
 multiT = False # when True, MCMC will be run at 3 temperatures set in 'betas'
 convTest = (not multiT) and False # convergence test cannot be run with multiTempering
+linear = 1
 
 # Choose the "true" parameters.
 #q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
@@ -46,7 +47,7 @@ k_res = k*dkMz
 
 def lnlike(theta, k, P, Perr):
     b, beta = theta
-    model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta)*dkMz
+    model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta, linear=linear)*dkMz
     inv_sigma2 = 1.0/(Perr**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
@@ -167,9 +168,10 @@ else:
 
 elapsed_time = time.process_time() - t
 
+
 paramfile = open('../output/'+headFile+'/params.dat','w')
-paramfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(nwalkers),str(nsteps),str(ndim),
-                str(z),str(err),str(elapsed_time)))
+paramfile.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(str(nwalkers),str(nsteps),str(ndim),
+                str(z),str(err),str(linear),str(elapsed_time)))
 paramfile.close()
 c=chain
 for w in range(nwalkers):

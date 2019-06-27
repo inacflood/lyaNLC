@@ -6,9 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run6"
+headFile = "run7"
 saveFigs = True
-testingBB = False
+testingBB = True
 P3D = False
 
 if P3D:
@@ -16,12 +16,14 @@ if P3D:
     mu_str = str(int(mu*10))
     beta_f = 1.650
     b_f = -0.134
+elif testingBB:
+    nwalkers, nsteps, ndim, z, err, linear, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
+    linear = int(linear)
+    lin_str = str(linear)
+    beta_f = 1.650
+    b_f = -0.134
 else:
     nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
-#    beta_f = 1.650
-#    b_f = -0.134
-#    bp_f = b_f*(1+beta_f)
-    
     beta_f=1.650
     b_f = -0.134
 
@@ -140,8 +142,8 @@ else:
 if testingBB and (not P3D):
     pathView = plt.figure(4)
     for b,beta in samples[np.random.randint(len(samples), size=200)]:
-        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=bp)*k_res/np.pi, color="b", alpha=0.1)
-    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz)*k_res/np.pi, color="r", lw=2, alpha=0.8)
+        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta,linear=linear)*k_res/np.pi, color="b", alpha=0.1)
+    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, linear=linear)*k_res/np.pi, color="r", lw=2, alpha=0.8)
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
     plt.yscale('log')
@@ -167,7 +169,7 @@ if not testingBB:
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
     
-    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"lin"+lin_str+"posSMmtF.pdf")
     pathView.show()
     
 
@@ -180,7 +182,7 @@ if testingBB:
     if P3D:
         cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posSBmtFmu"+mu_str+".pdf")
     else:
-        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posSBmtF.pdf")
+        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"lin"+lin_str+"posSBmtF.pdf")
     cornerplt.show()
     
     v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
