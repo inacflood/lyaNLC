@@ -9,6 +9,7 @@ import tqdm
 import get_npd_p1d as npd
 import ptemcee
 from ptemcee.sampler import Sampler
+import os
 
 t = time.process_time()
 
