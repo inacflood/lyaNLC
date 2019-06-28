@@ -14,15 +14,15 @@ import os
 t = time.process_time()
 
 # Make a directory to store the sampling data and parameters
-headFile = "run5"
+headFile = "run9"
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
 z=2.4
 err = 0.5 # width of the uniform parameter priors
 pos_method = 2 # emcee starts 1:from a small ball, 2:in full param space
-multiT = True # when True, MCMC will be run at 3 temperatures set in 'betas'
-convTest = (not multiT) and False # convergence test cannot be run with multiTempering
+multiT = False # when True, MCMC will be run at 3 temperatures set in 'betas'
+convTest = (not multiT) and True # convergence test cannot be run with multiTempering
 
 # Choose the "true" parameters.
 q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
@@ -48,16 +48,19 @@ def lnlike(theta, k, P, Perr):
     inv_sigma2 = 1.0/(Perr**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
-var_list = np.zeros(fids)
-min_list = np.zeros(fids)
-max_list = np.zeros(fids)
+#var_list = np.zeros(fids)
+#min_list = np.zeros(fids)
+#max_list = np.zeros(fids)
+#
+#for num in range(fids):
+#    fid_val = fidList[num]
+#    var = np.abs(fid_val)*err
+#    min_list[num] = fid_val - var
+#    max_list[num] = fid_val + var
+#    var_list[num] = var
 
-for num in range(fids):
-    fid_val = fidList[num]
-    var = np.abs(fid_val)*err
-    min_list[num] = fid_val - var
-    max_list[num] = fid_val + var
-    var_list[num] = var
+min_list = [0,0,0,0,0,0]
+max_list = [10,10,100,10,10,10]
 
 # Set up MLE for emcee error evaluation
 
