@@ -1,4 +1,4 @@
-import cosmoCAMB as cCAMB
+mport cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import numpy as np
 import scipy.optimize as op
