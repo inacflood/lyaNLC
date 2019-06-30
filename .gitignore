@@ -8,3 +8,4 @@ py/__pycache__/lya_biases.cpython-37.pyc
 py/__pycache__/theoryLya.cpython-37.pyc
 .DS_Store
 output/.DS_Store
+*.h5

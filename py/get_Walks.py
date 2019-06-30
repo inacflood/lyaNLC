@@ -6,9 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run8"
+headFile = "run9"
 saveFigs = True
-testingBB = True
+testingBB = False
 P3D = False
 
 if P3D:
@@ -169,7 +169,7 @@ if not testingBB:
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
     
-    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"lin"+lin_str+"posSMmtF.pdf")
+    pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
     pathView.show()
     
 
@@ -182,7 +182,7 @@ if testingBB:
     if P3D:
         cornerplt.savefig("../output"+headFile+"/triangle_err"+err_str+"posSBmtFmu"+mu_str+".pdf")
     else:
-        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"lin"+lin_str+"posSBmtF.pdf")
+        cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posSBmtF.pdf")
     cornerplt.show()
     
     v1_mcmc, v2_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
