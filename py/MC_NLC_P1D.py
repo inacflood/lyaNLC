@@ -1,4 +1,4 @@
-mport cosmoCAMB as cCAMB
+import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import numpy as np
 import scipy.optimize as op
@@ -14,7 +14,7 @@ import os
 t = time.process_time()
 
 # Make a directory to store the sampling data and parameters
-headFile = "run9"
+headFile = "run18"
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
@@ -26,7 +26,7 @@ convTest = (not multiT) and True # convergence test cannot be run with multiTemp
 
 # Choose the "true" parameters.
 q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
+fidList = [q1_f, kp_f, kvav_f, av_f, bv_f]
 fids = len(fidList)
 
 cosmo = cCAMB.Cosmology(z)
@@ -43,8 +43,8 @@ k_res = k*dkMz
 # Maximum Likelihood Estimate fit to the synthetic data
 
 def lnlike(theta, k, P, Perr):
-    q1,q2,kp,kvav,av,bv = theta
-    model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
+    q1,kp,kvav,av,bv = theta
+    model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
     inv_sigma2 = 1.0/(Perr**2)
     return -0.5*(np.sum((P-model)**2*inv_sigma2))
 
@@ -59,15 +59,15 @@ def lnlike(theta, k, P, Perr):
 #    max_list[num] = fid_val + var
 #    var_list[num] = var
 
-min_list = [0,0,0,0,0,0]
-max_list = [10,10,100,10,10,10]
+min_list = [0,0,0,0,0]
+max_list = [2,25,2,2,5]
 
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
     q1,q2,kp,kvav,av,bv = theta
-    if (min_list[0] < q1 < max_list[0] and min_list[1] < q2 < max_list[1] and min_list[2] < kp < max_list[2] and min_list[3] < kvav < max_list[3] 
-            and min_list[4] < av < max_list[4]  and min_list[5] < bv < max_list[5]):
+    if (min_list[0] < q1 < max_list[0] and min_list[1] < kp < max_list[1] and min_list[2] < kvav < max_list[2] 
+            and min_list[3] < av < max_list[3]  and min_list[4] < bv < max_list[4]):
         return 0.0
     return -np.inf
 
@@ -78,7 +78,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 6, 300
+ndim, nwalkers = 5, 500
 
 if multiT:
     if pos_method==1:
@@ -92,22 +92,19 @@ if multiT:
         pos_13 = np.random.uniform(min_list[2],max_list[2],nwalkers)
         pos_14 = np.random.uniform(min_list[3],max_list[3],nwalkers)
         pos_15 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-        pos_16 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-        pos_1 = [[pos_11[i],pos_12[i],pos_13[i],pos_14[i],pos_15[i],pos_16[i]] for i in range(nwalkers)]
+        pos_1 = [[pos_11[i],pos_12[i],pos_13[i],pos_14[i],pos_15[i]] for i in range(nwalkers)]
         pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
         pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
         pos_23 = np.random.uniform(min_list[2],max_list[2],nwalkers)
         pos_24 = np.random.uniform(min_list[3],max_list[3],nwalkers)
         pos_25 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-        pos_26 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-        pos_2 = [[pos_21[i],pos_22[i],pos_23[i],pos_24[i],pos_25[i],pos_26[i]] for i in range(nwalkers)]
+        pos_2 = [[pos_21[i],pos_22[i],pos_23[i],pos_24[i],pos_25[i]] for i in range(nwalkers)]
         pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
         pos_32 = np.random.uniform(min_list[1],max_list[1],nwalkers)
         pos_33 = np.random.uniform(min_list[2],max_list[2],nwalkers)
         pos_34 = np.random.uniform(min_list[3],max_list[3],nwalkers)
         pos_35 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-        pos_36 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-        pos_3 = [[pos_31[i],pos_32[i],pos_33[i],pos_34[i],pos_35[i],pos_36[i]] for i in range(nwalkers)]
+        pos_3 = [[pos_31[i],pos_32[i],pos_33[i],pos_34[i],pos_35[i]] for i in range(nwalkers)]
         pos = [pos_1,pos_2,pos_3]
 else:
     if pos_method==1:
@@ -118,8 +115,7 @@ else:
         pos_3 = np.random.uniform(min_list[2],max_list[2],nwalkers)
         pos_4 = np.random.uniform(min_list[3],max_list[3],nwalkers)
         pos_5 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-        pos_6 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-        pos = [[pos_1[i],pos_2[i],pos_3[i],pos_4[i],pos_5[i],pos_6[i]] for i in range(nwalkers)]
+        pos = [[pos_1[i],pos_2[i],pos_3[i],pos_4[i],pos_5[i]] for i in range(nwalkers)]
 
 # Run emcee error evaluation
 nsteps=0
@@ -186,6 +182,6 @@ c=chain
 for w in range(nwalkers):
     file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
     for i in range(nsteps):
-        file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+        file.write('{0} {1} {2} {3} {4} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
                    str(c[w][i][2]), str(c[w][i][3]), str(c[w][i][4]), str(c[w][i][5]))) 
     file.close()
