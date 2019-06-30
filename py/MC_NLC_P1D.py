@@ -14,11 +14,11 @@ import os
 t = time.process_time()
 
 # Make a directory to store the sampling data and parameters
-headFile = "run18"
+headFile = "run19"
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
-z=2.4
+z=2.6
 err = 0.5 # width of the uniform parameter priors
 pos_method = 2 # emcee starts 1:from a small ball, 2:in full param space
 multiT = False # when True, MCMC will be run at 3 temperatures set in 'betas'
