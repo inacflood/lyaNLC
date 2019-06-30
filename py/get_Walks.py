@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run8"
+headFile = "run17"
 saveFigs = True
 testingBB = True
 P3D = False
@@ -165,7 +165,7 @@ if not testingBB:
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
     plt.yscale('log')
-    plt.xlabel('k [(Mpc/h)^-1]')
+    plt.xlabel('k [(km/s)^-1]')
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
     
