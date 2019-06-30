@@ -65,7 +65,7 @@ max_list = [2,25,2,2,5]
 # Set up MLE for emcee error evaluation
 
 def lnprior(theta):
-    q1,q2,kp,kvav,av,bv = theta
+    q1,kp,kvav,av,bv = theta
     if (min_list[0] < q1 < max_list[0] and min_list[1] < kp < max_list[1] and min_list[2] < kvav < max_list[2] 
             and min_list[3] < av < max_list[3]  and min_list[4] < bv < max_list[4]):
         return 0.0
@@ -78,7 +78,7 @@ def lnprob(theta, k, P, Perr):
     return lp + lnlike(theta, k, P, Perr)
 
 # Set up initial positions of walkers
-ndim, nwalkers = 5, 500
+ndim, nwalkers = 5, 50
 
 if multiT:
     if pos_method==1:

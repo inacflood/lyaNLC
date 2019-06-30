@@ -51,7 +51,7 @@ def D_hMpc_AiP2015(k_hMpc,mu,Pk_lin,q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,
 #    return q1, q2, kp, kvav, av, bv
     
 def getFiducialValues(z):
-    q1, q2, kvav, kp, av, bv = np.zeros(5)
+    q1, q2, kvav, kp, av, bv = np.zeros(6)
     if z==2.2:
         q1, kp, kvav, av, bv = [0.677, 13.3, 0.961, 0.533, 1.54]
     elif z==2.4:
