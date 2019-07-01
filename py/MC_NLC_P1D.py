@@ -31,10 +31,10 @@ if __name__ == '__main__':
     parser.add_argument('--pos_method',type=int,choices=[1,2],default=2,required=True,
         help='Emcee starts 1:from a small ball, 2:in full param space')
     
-    parser.add_argument('--multiT',type=bool,default=False,required=True,
+    parser.add_argument('--multiT',type=bool,default=False,required=False,
         help='When True, MCMC will be run at 3 temperatures set in betas')
     
-    parser.add_argument('--CTSwitch',type=bool,default=False,required=False,
+    parser.add_argument('--CTSwitch',type=bool,default=False,required=True,
         help='When True, and ONLY if multiT is False, emcee will run with convergence checking')
     
     parser.add_argument('--ndim',type=int,default=0,required=True,
@@ -64,7 +64,9 @@ if __name__ == '__main__':
         os.makedirs('../output/'+headFile)
         
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
-    
+    print(multiT)
+    print(CTSwitch)
+    print(convTest)
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
     fidList = [q1_f, kp_f, kvav_f, av_f, bv_f]
