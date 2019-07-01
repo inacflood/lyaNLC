@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run9"
+headFile = "run20"
 saveFigs = True
 testingBB = False
 P3D = False
@@ -98,19 +98,19 @@ else:
         param1.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq1_err"+err_str+".pdf")
     param1.show()
 
-    param2 = plt.figure(2)
-    plt.ylabel('q2')
-    for w in range(nwalkers):
-        plt.plot([chain[w][s][1] for s in range(nsteps)])
-
-    if saveFigs:
-        param2.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq2_err"+err_str+".pdf")
-    param2.show()
+#    param2 = plt.figure(2)
+#    plt.ylabel('q2')
+#    for w in range(nwalkers):
+#        plt.plot([chain[w][s][1] for s in range(nsteps)])
+#
+#    if saveFigs:
+#        param2.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq2_err"+err_str+".pdf")
+#    param2.show()
 
     param3 = plt.figure(3)
     plt.ylabel('kp')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][2] for s in range(nsteps)])
+        plt.plot([chain[w][s][1] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskp_err"+err_str+".pdf")
     param3.show()
@@ -118,7 +118,7 @@ else:
     param4 = plt.figure(4)
     plt.ylabel('kvav')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][3] for s in range(nsteps)])
+        plt.plot([chain[w][s][2] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskvav_err"+err_str+".pdf")
     param3.show()
@@ -126,7 +126,7 @@ else:
     param5 = plt.figure(5)
     plt.ylabel('av')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][4] for s in range(nsteps)])
+        plt.plot([chain[w][s][3] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsav_err"+err_str+".pdf")
     param3.show()
@@ -134,7 +134,7 @@ else:
     param6 = plt.figure(6)
     plt.ylabel('bv')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][5] for s in range(nsteps)])
+        plt.plot([chain[w][s][4] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
     param3.show()
@@ -157,10 +157,10 @@ if not testingBB:
     
     pathView = plt.figure(7)
     
-    for q1,q2,kp,kvav,av,bv in samples[np.random.randint(len(samples), size=200)]:
-        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*k_res/np.pi
+    for q1,kp,kvav,av,bv in samples[np.random.randint(len(samples), size=200)]:
+        plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*k_res/np.pi
                  , color="b", alpha=0.1)
-    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f,q2=q2_f,kp=kp_f,kvav=kvav_f,av=av_f,bv=bv_f)*k_res/np.pi
+    plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f,q2=0,kp=kp_f,kvav=kvav_f,av=av_f,bv=bv_f)*k_res/np.pi
              , color="r", lw=2, alpha=0.8)
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
@@ -192,16 +192,16 @@ if testingBB:
     
 else:
     
-   cornerplt = corner.corner(samples, labels=["$q1$", "$q2$", "$kp$", "$kvav$", "$av$", "$bv$"],
-                truths=[q1_f,q2_f,kp_f,kvav_f,av_f,bv_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+   cornerplt = corner.corner(samples, labels=["$q1$", "$kp$", "$kvav$", "$av$", "$bv$"],
+                truths=[q1_f,kp_f,kvav_f,av_f,bv_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
    
    cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posFSmtT.pdf")
    cornerplt.show()
-   v1_mcmc, v2_mcmc, v3_mcmc, v4_mcmc, v5_mcmc, v6_mcmc = map(lambda v: 
+   v1_mcmc, v2_mcmc, v3_mcmc, v4_mcmc, v5_mcmc = map(lambda v: 
                (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
     
-   print("q1:", v1_mcmc, "q2:", v2_mcmc, "kp:", v3_mcmc, "kvav:", v4_mcmc, 
-         "av:", v5_mcmc, "bv:", v6_mcmc) 
+   print("q1:", v1_mcmc, "kp:", v2_mcmc, "kvav:", v3_mcmc, 
+         "av:", v4_mcmc, "bv:", v5_mcmc) 
 
 
 

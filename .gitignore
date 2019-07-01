@@ -13,3 +13,5 @@ py/__pycache__/cosmoCAMB.cpython-37.pyc
 py/__pycache__/get_npd_p1d.cpython-37.pyc
 py/__pycache__/lya_biases.cpython-37.pyc
 py/__pycache__/theoryLya.cpython-37.pyc
+py/run18.h5
+*.h5
