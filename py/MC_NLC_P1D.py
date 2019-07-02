@@ -31,11 +31,11 @@ if __name__ == '__main__':
     parser.add_argument('--pos_method',type=int,choices=[1,2],default=2,required=True,
         help='Emcee starts 1:from a small ball, 2:in full param space')
     
-    parser.add_argument('--multiT',type=bool,default=False,required=False,
-        help='When True, MCMC will be run at 3 temperatures set in betas')
+    parser.add_argument('--multiT',default=False,action='store_true',required=False,  # will be True if included in call
+        help='When True, MCMC will be run at 3 temperatures set in betas')            # False otherwise
     
-    parser.add_argument('--CTSwitch',type=bool,default=False,required=True,
-        help='When True, and ONLY if multiT is False, emcee will run with convergence checking')
+    parser.add_argument('--CTSwitch',default=False,action='store_true',required=False, # will be True if included in call
+        help='When True, and ONLY if multiT is False, emcee will run with convergence checking')  # False otherwise
     
     parser.add_argument('--ndim',type=int,default=0,required=True,
         help='Number of parameters being fitted')
