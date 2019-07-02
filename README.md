@@ -10,8 +10,8 @@ Useful documentation :
 
 Examples of running emcee:
 * No parallel tempering, no convergence testing:
-    run MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500
+    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500
 * Parallel tempering, no convergence testing
-    run MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --multiT
+    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --multiT
 * No parallel tempering, convergence testing
-    run MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --CTSwitch
+    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --CTSwitch
