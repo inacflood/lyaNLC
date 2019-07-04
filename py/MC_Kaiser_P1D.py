@@ -33,10 +33,10 @@ if __name__ == '__main__':
     parser.add_argument('--pos_method',type=int,choices=[1,2],default=2,required=True,
         help='Emcee starts 1:from a small ball, 2:in full param space')
     
-    parser.add_argument('--multiT',default=False,action='store_true',required=False,  # will be True if included in call
+    parser.add_argument('--multiT',default=False, action='store_true',required=False,  # will be True if included in call
         help='When True, MCMC will be run at 3 temperatures set in betas')            # False otherwise
     
-    parser.add_argument('--CTSwitch',default=False,action='store_true',required=False, # will be True if included in call
+    parser.add_argument('--CTSwitch',default=False, action='store_true',required=False, # will be True if included in call
         help='When True, and ONLY if multiT is False, emcee will run with convergence checking')  # False otherwise
     
     parser.add_argument('--linear',type=int,default=0,choices=[0,1],required=True,
@@ -69,9 +69,7 @@ if __name__ == '__main__':
         os.makedirs('../output/'+headFile)
         
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
-    print("MultiT:",multiT)
-    print("CTSwitch:",CTSwitch)
-    print("convTest:",convTest)
+
     
     beta_f = 1.650
     b_f = -0.134
@@ -118,10 +116,6 @@ if __name__ == '__main__':
             return -np.inf
         return lp + lnlike(theta)
     
-#    with MPIPool() as pool:
-#        if not pool.is_master():
-#            pool.wait()
-#            sys.exit(0)
     
     # Set up initial positions of walkers
     if multiT:
@@ -193,6 +187,18 @@ if __name__ == '__main__':
         mle_soln = chain[(hp_loc[1],hp_loc[0])]
         print(mle_soln)
         
+        quantiles = np.percentile(sampler.flatchain[:,0], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+        print("1 sigma spread", sigma1_1)
+        print("2 sigma spread", sigma2_1)
+        
+        quantiles = np.percentile(sampler.flatchain[:,1], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
+        print("1 sigma spread", sigma1_2)
+        print("2 sigma spread", sigma2_2)
+        
     elif multiT:
         betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
         sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas,threads=3)
@@ -203,10 +209,23 @@ if __name__ == '__main__':
         sampler.run_mcmc(pos, nsteps)
         chain = sampler.chain
         probs = sampler.get_log_prob()
+        
         maxprob=np.argmin(probs)
         hp_loc = np.unravel_index(maxprob, probs.shape)
-        mle_soln = chain[(hp_loc[1],hp_loc[0])]
+        mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
         print(mle_soln)
+        
+        quantiles = np.percentile(sampler.flatchain[:,0], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+        print("1 sigma spread", sigma1_1)
+        print("2 sigma spread", sigma2_1)
+        
+        quantiles = np.percentile(sampler.flatchain[:,1], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
+        print("1 sigma spread", sigma1_2)
+        print("2 sigma spread", sigma2_2)
     
     elapsed_time = time.process_time() - t
     
@@ -215,9 +234,22 @@ if __name__ == '__main__':
     paramfile.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                     str(z),str(err),str(linear),str(elapsed_time)))
     paramfile.close()
+    
+    resultsfile = open('../output/'+headFile+'/results.dat','w')
+    resultsfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(mle_soln[0]),str(sigma1_1),str(sigma2_1),
+                    str(mle_soln[1]),str(sigma1_2),str(sigma2_2)))
+    resultsfile.close()
+    
     c=chain
     for w in range(nwalkers):
         file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
         for i in range(nsteps):
             file.write('{0} {1} \n'.format(str(c[w][i][0]), str(c[w][i][1]))) 
         file.close()
+        
+    file=open('../output/'+headFile+'/logprob.dat','w')   
+    for s in range(nsteps):
+        for w in range(nwalkers):
+            file.write(str(probs[s][w])+' ')
+        file.write('\n')
+    file.close()

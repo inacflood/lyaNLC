@@ -64,9 +64,7 @@ if __name__ == '__main__':
         os.makedirs('../output/'+headFile)
         
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
-    print(multiT)
-    print(CTSwitch)
-    print(convTest)
+
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
     fidList = [q1_f, kp_f, kvav_f, av_f, bv_f]
@@ -85,7 +83,7 @@ if __name__ == '__main__':
     
     # Maximum Likelihood Estimate fit to the synthetic data
     
-    def lnlike(theta, k, P, Perr):
+    def lnlike(theta):
         q1,kp,kvav,av,bv = theta
         model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
@@ -114,11 +112,11 @@ if __name__ == '__main__':
             return 0.0
         return -np.inf
     
-    def lnprob(theta, k, P, Perr):
+    def lnprob(theta):
         lp = lnprior(theta)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + lnlike(theta, k, P, Perr)
+        return lp + lnlike(theta)
     
     # Set up initial positions of walkers
     
@@ -160,16 +158,17 @@ if __name__ == '__main__':
             pos = [[pos_1[i],pos_2[i],pos_3[i],pos_4[i],pos_5[i]] for i in range(nwalkers)]
     
     # Run emcee error evaluation
-    nsteps=0
+    nsteps = 0
+    sigma_arr = []
     
     if convTest: # walker paths will be stored in backend and periodically checked for convergence
         filename = headFile+".h5"
         backend = emcee.backends.HDFBackend(filename)
         backend.reset(nwalkers, ndim)
     
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr), backend=backend)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 10000
+        max_n = 100
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
@@ -179,7 +178,7 @@ if __name__ == '__main__':
         old_tau = np.inf
     
         # Now we'll sample for up to max_n steps
-        for sample in sampler.sample(pos, iterations=max_n, progress=True):
+        for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
             # Only check convergence every 100 steps
             if sampler.iteration % 100:
                 continue
@@ -199,19 +198,80 @@ if __name__ == '__main__':
     
         nsteps = sampler.iteration
         chain = sampler.chain
+        probs = sampler.get_log_prob()
+        maxprob=np.argmin(probs)
+        hp_loc = np.unravel_index(maxprob, probs.shape)
+        mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+        print(mle_soln)
         
+        
+        quantiles = np.percentile(sampler.flatchain[:,0], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_1, sigma2_1]
+        
+        quantiles = np.percentile(sampler.flatchain[:,1], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_2, sigma2_2]
+        
+        quantiles = np.percentile(sampler.flatchain[:,2], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_3 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_3, sigma2_3]
+        
+        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_4, sigma2_4]
+        
+        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_5, sigma2_5]
+
     elif multiT:
         nsteps = 1000
         betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
+        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas,threads=3)
         sampler.run_mcmc(pos, nsteps)
         chain = sampler.chain[2][:,:,:]
         
     else:
         nsteps = 1000
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
-        sampler.run_mcmc(pos, nsteps)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)
+        sampler.run_mcmc(pos, nsteps, store=True)
         chain = sampler.chain
+        probs = sampler.get_log_prob()
+        maxprob=np.argmin(probs)
+        hp_loc = np.unravel_index(maxprob, probs.shape)
+        mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+        print(mle_soln)
+        
+        quantiles = np.percentile(sampler.flatchain[:,0], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_1, sigma2_1]
+        
+        quantiles = np.percentile(sampler.flatchain[:,1], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_2, sigma2_2]
+        
+        quantiles = np.percentile(sampler.flatchain[:,2], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_3 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_3, sigma2_3]
+        
+        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_4, sigma2_4]
+        
+        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_5, sigma2_5]
     
     elapsed_time = time.process_time() - t
     
@@ -220,6 +280,12 @@ if __name__ == '__main__':
     paramfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                     str(z),str(err),str(elapsed_time)))
     paramfile.close()
+    
+    resultsfile = open('../output/'+headFile+'/results.dat','w')
+    for d in range(ndim):
+        resultsfile.write('{0} {1} {2} \n'.format(str(mle_soln[d]), str(sigma_arr[2*d]), str(sigma_arr[2*d+1])))
+    resultsfile.close()
+    
     c=chain
     for w in range(nwalkers):
         file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
@@ -227,3 +293,13 @@ if __name__ == '__main__':
             file.write('{0} {1} {2} {3} {4} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
                        str(c[w][i][2]), str(c[w][i][3]), str(c[w][i][4]))) 
         file.close()
+        
+    file=open('../output/'+headFile+'/logprob.dat','w')   
+    for s in range(nsteps):
+        for w in range(nwalkers):
+            file.write(str(probs[s][w])+' ')
+        file.write('\n')
+    file.close()
+        
+        
+        
