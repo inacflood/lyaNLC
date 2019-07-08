@@ -6,9 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run20"
-saveFigs = True
-testingBB = False
+headFile = "run32"
+saveFigs = False
+testingBB = True
 P3D = False
 
 if P3D:
