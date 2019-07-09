@@ -70,6 +70,8 @@ if __name__ == '__main__':
     fidList = [q1_f, kp_f, kvav_f, av_f, bv_f]
     fids = len(fidList)
     
+    q1_e = 0.46008
+    
     cosmo = cCAMB.Cosmology(z)
     th = tLyA.TheoryLya(cosmo)
     dkMz = th.cosmo.dkms_dhMpc(z)
@@ -84,8 +86,8 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        q1,kp,kvav,av,bv = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
+        kp,kvav,av = theta
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_e, q2=0, kp=kp, kvav=kvav, av=av, bv=bv_f)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
@@ -106,9 +108,9 @@ if __name__ == '__main__':
     # Set up MLE for emcee error evaluation
     
     def lnprior(theta):
-        q1,kp,kvav,av,bv = theta
-        if (min_list[0] < q1 < max_list[0] and min_list[1] < kp < max_list[1] and min_list[2] < kvav < max_list[2] 
-                and min_list[3] < av < max_list[3]  and min_list[4] < bv < max_list[4]):
+        kp,kvav,av = theta
+        if (min_list[1] < kp < max_list[1] and min_list[2] < kvav < max_list[2] 
+                and min_list[3] < av < max_list[3]):
             return 0.0
         return -np.inf
     
@@ -127,35 +129,35 @@ if __name__ == '__main__':
             pos_3 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
             pos = [pos_1,pos_2,pos_3]
         else:
-            pos_11 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+            #pos_11 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_12 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_13 = np.random.uniform(min_list[2],max_list[2],nwalkers)
             pos_14 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_15 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_1 = [[pos_11[i],pos_12[i],pos_13[i],pos_14[i],pos_15[i]] for i in range(nwalkers)]
-            pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+            #pos_15 = np.random.uniform(min_list[4],max_list[4],nwalkers)
+            pos_1 = [[pos_12[i],pos_13[i],pos_14[i]] for i in range(nwalkers)]
+            #pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_23 = np.random.uniform(min_list[2],max_list[2],nwalkers)
             pos_24 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_25 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_2 = [[pos_21[i],pos_22[i],pos_23[i],pos_24[i],pos_25[i]] for i in range(nwalkers)]
-            pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+            #pos_25 = np.random.uniform(min_list[4],max_list[4],nwalkers)
+            pos_2 = [[pos_22[i],pos_23[i],pos_24[i]] for i in range(nwalkers)]
+           # pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_32 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_33 = np.random.uniform(min_list[2],max_list[2],nwalkers)
             pos_34 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_35 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_3 = [[pos_31[i],pos_32[i],pos_33[i],pos_34[i],pos_35[i]] for i in range(nwalkers)]
+            #pos_35 = np.random.uniform(min_list[4],max_list[4],nwalkers)
+            pos_3 = [[pos_32[i],pos_33[i],pos_34[i]] for i in range(nwalkers)]
             pos = [pos_1,pos_2,pos_3]
     else:
         if pos_method==1:
             pos = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
         else:
-            pos_1 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+            #pos_1 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_2 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_3 = np.random.uniform(min_list[2],max_list[2],nwalkers)
             pos_4 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_5 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos = [[pos_1[i],pos_2[i],pos_3[i],pos_4[i],pos_5[i]] for i in range(nwalkers)]
+            #pos_5 = np.random.uniform(min_list[4],max_list[4],nwalkers)
+            pos = [[pos_2[i],pos_3[i],pos_4[i]] for i in range(nwalkers)]
     
     # Run emcee error evaluation
     nsteps = 0
@@ -168,7 +170,7 @@ if __name__ == '__main__':
     
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 100
+        max_n = 50000
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
@@ -220,15 +222,15 @@ if __name__ == '__main__':
         sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
         sigma_arr+=[sigma1_3, sigma2_3]
         
-        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1_4, sigma2_4]
-        
-        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1_5, sigma2_5]
+#        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
+#        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
+#        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
+#        sigma_arr+=[sigma1_4, sigma2_4]
+#        
+#        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
+#        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
+#        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
+#        sigma_arr+=[sigma1_5, sigma2_5]
 
     elif multiT:
         nsteps = 1000
@@ -263,15 +265,15 @@ if __name__ == '__main__':
         sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
         sigma_arr+=[sigma1_3, sigma2_3]
         
-        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1_4, sigma2_4]
-        
-        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1_5, sigma2_5]
+#        quantiles = np.percentile(sampler.flatchain[:,3], [2.28, 15.9, 50, 84.2, 97.7])
+#        sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
+#        sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
+#        sigma_arr+=[sigma1_4, sigma2_4]
+#        
+#        quantiles = np.percentile(sampler.flatchain[:,4], [2.28, 15.9, 50, 84.2, 97.7])
+#        sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
+#        sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
+#        sigma_arr+=[sigma1_5, sigma2_5]
     
     elapsed_time = time.process_time() - t
     
@@ -281,25 +283,28 @@ if __name__ == '__main__':
                     str(z),str(err),str(elapsed_time)))
     paramfile.close()
     
-    resultsfile = open('../output/'+headFile+'/results.dat','w')
-    for d in range(ndim):
-        resultsfile.write('{0} {1} {2} \n'.format(str(mle_soln[d]), str(sigma_arr[2*d]), str(sigma_arr[2*d+1])))
-    resultsfile.close()
+    if not multiT:
+        resultsfile = open('../output/'+headFile+'/results.dat','w')
+        for d in range(ndim):
+            resultsfile.write('{0} {1} {2} \n'.format(str(mle_soln[d]), str(sigma_arr[2*d]), str(sigma_arr[2*d+1])))
+        resultsfile.close()
+        
+        file=open('../output/'+headFile+'/logprob.dat','w')   
+        for s in range(nsteps):
+            for w in range(nwalkers):
+                file.write(str(probs[s][w])+' ')
+            file.write('\n')
+        file.close()
     
     c=chain
     for w in range(nwalkers):
         file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
         for i in range(nsteps):
-            file.write('{0} {1} {2} {3} {4} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
-                       str(c[w][i][2]), str(c[w][i][3]), str(c[w][i][4]))) 
+            file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                       str(c[w][i][2]))) 
         file.close()
         
-    file=open('../output/'+headFile+'/logprob.dat','w')   
-    for s in range(nsteps):
-        for w in range(nwalkers):
-            file.write(str(probs[s][w])+' ')
-        file.write('\n')
-    file.close()
+
         
         
         
