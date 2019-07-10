@@ -74,7 +74,7 @@ if __name__ == '__main__':
     
     cosmo = cCAMB.Cosmology(z)
     th = tLyA.TheoryLya(cosmo)
-    dkMz = th.cosmo.dkms_dhMpc(z)
+#    dkMz = th.cosmo.dkms_dhMpc(z)
 #    
 #    # Get actual data
 #    data = npd.LyA_P1D(z)
