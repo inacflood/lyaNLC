@@ -73,7 +73,7 @@ if __name__ == '__main__':
     #q1_e = 0.46008
     
     cosmo = cCAMB.Cosmology(z)
-    th = tLyA.TheoryLya(cosmo)
+#    th = tLyA.TheoryLya(cosmo)
 #    dkMz = th.cosmo.dkms_dhMpc(z)
 #    
 #    # Get actual data
