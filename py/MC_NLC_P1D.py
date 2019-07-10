@@ -69,12 +69,12 @@ if __name__ == '__main__':
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
     fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
     fids = len(fidList)
-#    
-#    #q1_e = 0.46008
-#    
-#    cosmo = cCAMB.Cosmology(z)
-#    th = tLyA.TheoryLya(cosmo)
-#    dkMz = th.cosmo.dkms_dhMpc(z)
+    
+    #q1_e = 0.46008
+    
+    cosmo = cCAMB.Cosmology(z)
+    th = tLyA.TheoryLya(cosmo)
+    dkMz = th.cosmo.dkms_dhMpc(z)
 #    
 #    # Get actual data
 #    data = npd.LyA_P1D(z)
