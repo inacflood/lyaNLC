@@ -33,36 +33,36 @@ def D_hMpc_AiP2015(k_hMpc,mu,Pk_lin,q1=0.057,q2=0.368,kp=9.2,kvav=0.48,av=0.156,
 
 	return np.exp(to_exp)
 
-#def getFiducialValues(z):
-#    q1, q2, kvav, kp, av, bv = np.zeros(6)
-#    if z==2.2:
-#        q1, q2, kp, kvav, av, bv = [0.090, 0.316, 8.9, 0.493, 0.145, 1.54]
-#    elif z==2.4:
-#        q1, q2, kp, kvav, av, bv = [0.057, 0.368, 9.2, 0.480, 0.156, 1.57]
-#    elif z==2.6:
-#        q1, q2, kp, kvav, av, bv = [0.068, 0.390, 9.6, 0.483, 0.190, 1.61]
-#    elif z==2.8:
-#        q1, q2, kp, kvav, av, bv = [0.086, 0.417, 9.9, 0.493, 0.217, 1.63]
-#    elif z==3.0:
-#        q1, q2, kp, kvav, av, bv = [0.104, 0.444, 10.1, 0.516, 0.248, 1.66]
-#    else:
-#        print("Invalid z-value")
-#        return
-#    return q1, q2, kp, kvav, av, bv
-    
 def getFiducialValues(z):
     q1, q2, kvav, kp, av, bv = np.zeros(6)
     if z==2.2:
-        q1, kp, kvav, av, bv = [0.677, 13.3, 0.961, 0.533, 1.54]
+        q1, q2, kp, kvav, av, bv = [0.090, 0.316, 8.9, 0.493, 0.145, 1.54]
     elif z==2.4:
-        q1, kp, kvav, av, bv = [0.666, 13.5, 0.963, 0.561, 1.58]
+        q1, q2, kp, kvav, av, bv = [0.057, 0.368, 9.2, 0.480, 0.156, 1.57]
     elif z==2.6:
-        q1, kp, kvav, av, bv = [0.652, 13.6, 0.970, 0.590, 1.61]
+        q1, q2, kp, kvav, av, bv = [0.068, 0.390, 9.6, 0.483, 0.190, 1.61]
     elif z==2.8:
-        q1, kp, kvav, av, bv =  [0.644, 13.4, 0.979, 0.610, 1.64]
+        q1, q2, kp, kvav, av, bv = [0.086, 0.417, 9.9, 0.493, 0.217, 1.63]
     elif z==3.0:
-        q1, kp, kvav, av, bv = [0.648, 13.1, 1.01, 0.627, 1.66] 
+        q1, q2, kp, kvav, av, bv = [0.104, 0.444, 10.1, 0.516, 0.248, 1.66]
     else:
         print("Invalid z-value")
         return
     return q1, q2, kp, kvav, av, bv
+    
+#def getFiducialValues(z):
+#    q1, q2, kvav, kp, av, bv = np.zeros(6)
+#    if z==2.2:
+#        q1, kp, kvav, av, bv = [0.677, 13.3, 0.961, 0.533, 1.54]
+#    elif z==2.4:
+#        q1, kp, kvav, av, bv = [0.666, 13.5, 0.963, 0.561, 1.58]
+#    elif z==2.6:
+#        q1, kp, kvav, av, bv = [0.652, 13.6, 0.970, 0.590, 1.61]
+#    elif z==2.8:
+#        q1, kp, kvav, av, bv =  [0.644, 13.4, 0.979, 0.610, 1.64]
+#    elif z==3.0:
+#        q1, kp, kvav, av, bv = [0.648, 13.1, 1.01, 0.627, 1.66] 
+#    else:
+#        print("Invalid z-value")
+#        return
+#    return q1, q2, kp, kvav, av, bv
