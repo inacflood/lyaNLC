@@ -63,12 +63,12 @@ if __name__ == '__main__':
     if not os.path.exists('../output/'+headFile):
         os.makedirs('../output/'+headFile)
         
-#    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
-#
-#    # Choose the "true" parameters.
-#    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-#    fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
-#    fids = len(fidList)
+    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
+
+    # Choose the "true" parameters.
+    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
+    fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
+    fids = len(fidList)
 #    
 #    #q1_e = 0.46008
 #    
