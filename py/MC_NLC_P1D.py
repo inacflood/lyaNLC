@@ -135,7 +135,7 @@ if __name__ == '__main__':
             pos_14 = np.random.uniform(min_list[3],max_list[3],nwalkers)
             pos_15 = np.random.uniform(min_list[4],max_list[4],nwalkers)
             pos_16 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-            pos_1 = [[pos_11[i].pos_12[i],pos_13[i],pos_14[i],pos_15[i],pos_16[i]] for i in range(nwalkers)]
+            pos_1 = [[pos_11[i],pos_12[i],pos_13[i],pos_14[i],pos_15[i],pos_16[i]] for i in range(nwalkers)]
             
             pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
