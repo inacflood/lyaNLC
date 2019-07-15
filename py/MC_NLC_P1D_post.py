@@ -125,7 +125,7 @@ if __name__ == '__main__':
     
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 100000
+        max_n = nsteps
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
