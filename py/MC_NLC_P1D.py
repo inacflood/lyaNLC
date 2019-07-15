@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--z',type=float,default=None,required=True,
         help='Redshift value')
     
-    parser.add_argument('--err',type=float,default=None,required=True,
+    parser.add_argument('--err',type=float,default=0,required=False,
         help='Multiplicative half-width of the uniform parameter priors')
     
     parser.add_argument('--pos_method',type=int,choices=[1,2],default=2,required=True,
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 100000
+        max_n = 100
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
