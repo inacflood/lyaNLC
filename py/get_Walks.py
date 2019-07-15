@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run37"
+headFile = "run36"
 saveFigs = True
 testingBB = False
 P3D = False
@@ -91,28 +91,28 @@ if testingBB:
     param2.show()
 
 else:
-#    param1 = plt.figure(1)
-#    plt.ylabel('q1')
-#    for w in range(nwalkers):
-#        plt.plot([chain[w][s][0] for s in range(nsteps)])
-#
-#    if saveFigs:
-#        param1.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq1_err"+err_str+".pdf")
-#    param1.show()
+    param1 = plt.figure(1)
+    plt.ylabel('q1')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][0] for s in range(nsteps)])
 
-#    param2 = plt.figure(2)
-#    plt.ylabel('q2')
-#    for w in range(nwalkers):
-#        plt.plot([chain[w][s][1] for s in range(nsteps)])
-#
-#    if saveFigs:
-#        param2.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq2_err"+err_str+".pdf")
-#    param2.show()
+    if saveFigs:
+        param1.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq1_err"+err_str+".pdf")
+    param1.show()
+
+    param2 = plt.figure(2)
+    plt.ylabel('q2')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][1] for s in range(nsteps)])
+
+    if saveFigs:
+        param2.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsq2_err"+err_str+".pdf")
+    param2.show()
 
     param3 = plt.figure(3)
     plt.ylabel('kp')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][0] for s in range(nsteps)])
+        plt.plot([chain[w][s][2] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskp_err"+err_str+".pdf")
     param3.show()
@@ -120,7 +120,7 @@ else:
     param4 = plt.figure(4)
     plt.ylabel('kvav')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][1] for s in range(nsteps)])
+        plt.plot([chain[w][s][3] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskvav_err"+err_str+".pdf")
     param3.show()
@@ -128,19 +128,19 @@ else:
     param5 = plt.figure(5)
     plt.ylabel('av')
     for w in range(nwalkers):
-        plt.plot([chain[w][s][2] for s in range(nsteps)])
+        plt.plot([chain[w][s][4] for s in range(nsteps)])
     if saveFigs:
         param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsav_err"+err_str+".pdf")
     param3.show()
     
-#    param6 = plt.figure(6)
-#    plt.ylabel('bv')
-#    for w in range(nwalkers):
-#        plt.plot([chain[w][s][4] for s in range(nsteps)])
-#    if saveFigs:
-#        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
-#    param3.show()
-#    
+    param6 = plt.figure(6)
+    plt.ylabel('bv')
+    for w in range(nwalkers):
+        plt.plot([chain[w][s][5] for s in range(nsteps)])
+    if saveFigs:
+        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
+    param3.show()
+    
 if testingBB and (not P3D):
     pathView = plt.figure(4)
     for b,beta in samples[np.random.randint(len(samples), size=200)]:
