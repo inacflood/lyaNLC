@@ -11,8 +11,8 @@ import ptemcee
 from ptemcee.sampler import Sampler
 import os
 import argparse
-from schwimmbad import MPIPool
-import sys
+#from schwimmbad import MPIPool
+#import sys
 
 t = time.process_time()
 

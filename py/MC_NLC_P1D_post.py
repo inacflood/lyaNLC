@@ -112,7 +112,7 @@ if __name__ == '__main__':
     
     
     # Set up initial positions of walkers
-    pos = chain[:,-1,2]
+    pos = chain[:,-1,:]
         
     
     # Run emcee error evaluation
