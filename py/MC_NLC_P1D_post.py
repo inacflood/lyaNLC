@@ -140,7 +140,7 @@ if __name__ == '__main__':
             
             # Write to file
             for w in range(nwalkers):
-                file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
+                file=open('../output/'+headFile+'/walk'+str(w)+'.dat','a')
                 file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][0]), str(c[w][1]), 
                        str(c[w][2]),str(c[w][3]),str(c[w][4]),str(c[w][5]))) 
                 file.close()
