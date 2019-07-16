@@ -40,17 +40,17 @@ if __name__ == '__main__':
     headFile = args.out_dir
     inFile = args.in_dir        
     CTSwitch = args.CTSwitch
-    nsteps = args.nsteps
+    nsteps = int(args.nsteps)
     
-    nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+inFile+'/params.dat')
+    nwalkers, nst, ndim, z, err, runtime = np.loadtxt('../output/'+inFile+'/params.dat')
     beta_f=1.650
     b_f = -0.134
     
     nwalkers = int(nwalkers)
-    nsteps = int(nsteps)
     ndim = int(ndim)
     z_str = str(int(z*10)) # for use in file names
     err_str = str(int(err*100))
+    nst = int(nst)
 
     # Make a directory to store the sampling data and parameters
     if not os.path.exists('../output/'+headFile):
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     chain=np.stack([data0,data1])
     for w in range(nwalkers-2):
         data=np.loadtxt('../output/'+inFile+'/walk'+str(w+2)+'.dat')
-        data=data.reshape((1,nsteps,ndim))
+        data=data.reshape((1,nst,ndim))
         chain=np.vstack([chain,data])
         
     # Maximum Likelihood Estimate fit to the synthetic data
@@ -136,6 +136,15 @@ if __name__ == '__main__':
     
         # Now we'll sample for up to max_n steps
         for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
+            c = sample.coords
+            
+            # Write to file
+            for w in range(nwalkers):
+                file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
+                file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][0]), str(c[w][1]), 
+                       str(c[w][2]),str(c[w][3]),str(c[w][4]),str(c[w][5]))) 
+                file.close()
+                
             # Only check convergence every 100 steps
             if sampler.iteration % 100:
                 continue
@@ -192,13 +201,14 @@ if __name__ == '__main__':
         file.write('\n')
     file.close()
     
-    c=chain
-    for w in range(nwalkers):
-        file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
-        for i in range(nsteps):
-            file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
-                       str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4]),str(c[w][i][5]))) 
-        file.close()
+    if not CTSwitch:
+        c=chain
+        for w in range(nwalkers):
+            file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
+            for i in range(nsteps):
+                file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                           str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4]),str(c[w][i][5]))) 
+            file.close()
         
 
         
