@@ -16,7 +16,7 @@ import os
 import matplotlib.pyplot as plt
 
 z = 2.4
-headFile = "run44"
+headFile = "run45"
 
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
@@ -40,7 +40,12 @@ def model(k, q1, kp, kvav, av, bv):
     m = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
     return m
 
-popt, pcov = op.curve_fit(model, k_vals, P, p0=p0)
+min_list = [0,0,0,0,0]
+max_list = [2,25,2,2,5]
+
+popt, pcov = op.curve_fit(model, k_vals, P, p0=p0, bounds=(min_list,max_list))
+print("Fit values:", popt)
+print("Covariance:", pcov)
 
 valuesfile = open('../output/'+headFile+'/values.dat','w')
 valuesfile.write('{0} {1} {2} {3} {4} \n'.format(str(popt[0]),str(popt[1]),
