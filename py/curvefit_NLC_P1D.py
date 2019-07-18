@@ -16,14 +16,14 @@ import os
 import matplotlib.pyplot as plt
 
 z = 2.4
-headFile = "run45"
+headFile = "run52"
 
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
 
 q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-p0 = [q1_f, kp_f, kvav_f, av_f, bv_f]
+p0 = [kp_f, kvav_f, av_f]
 ndims = len(p0)
 
 cosmo = cCAMB.Cosmology(z)
@@ -36,33 +36,35 @@ P = data.Pk
 Perr = data.Pk_stat
 k_res = k_vals*dkMz
 
-def model(k, q1, kp, kvav, av, bv):
-    m = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=0, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
+def model(k, kp, kvav, av):
+    m = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav, av=av, bv=bv_f)*dkMz
     return m
 
-min_list = [0,0,0,0,0]
-max_list = [2,25,2,2,5]
+min_list = [0,0,0] #[0,0,0,0,0,0]
+max_list = [25,2,2] #[2,3,25,2,2,5]
 
 popt, pcov = op.curve_fit(model, k_vals, P, p0=p0, bounds=(min_list,max_list))
+
 print("Fit values:", popt)
+print("Uncertainties:",np.sqrt(pcov[0][0]),np.sqrt(pcov[1][1]),np.sqrt(pcov[2][2]))
 print("Covariance:", pcov)
 
 valuesfile = open('../output/'+headFile+'/values.dat','w')
-valuesfile.write('{0} {1} {2} {3} {4} \n'.format(str(popt[0]),str(popt[1]),
-                     str(popt[2]),str(popt[3]),str(popt[4])))
+valuesfile.write('{0} {1} {2}  \n'.format(str(popt[0]),str(popt[1]),
+                     str(popt[2])))
 valuesfile.close()
 
 covfile = open('../output/'+headFile+'/covariance.dat','w')
 for d in range(ndims):
-    covfile.write('{0} {1} {2} {3} {4} \n'.format(str(pcov[d][0]),str(pcov[d][1]),
-                     str(pcov[d][2]),str(pcov[d][3]),str(pcov[d][4])))
+    covfile.write('{0} {1} {2}  \n'.format(str(pcov[d][0]),str(pcov[d][1]),
+                     str(pcov[d][2])))
 covfile.close()
 
 resultView = plt.figure(1)
 plt.yscale('log')
 
-q1_p, kp_p, kvav_p, av_p, bv_p = popt
-plt.plot(k_vals,th.FluxP1D_hMpc(z, k_vals*dkMz, q1=q1_p, q2=0, kp=kp_p,kvav=kvav_p, av=av_p, bv=bv_p)*k_res/np.pi
+kp_p, kvav_p, av_p = popt
+plt.plot(k_vals,th.FluxP1D_hMpc(z, k_vals*dkMz, q1=q1_f, q2=q2_f, kp=kp_p,kvav=kvav_p, av=av_p, bv=bv_f)*k_res/np.pi
          , color="r", lw=2, alpha=0.8)
 plt.errorbar(k_vals, P*k_vals/np.pi, yerr=Perr*k_vals/np.pi, fmt=".k")
 
