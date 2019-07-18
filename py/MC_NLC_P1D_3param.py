@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
+    fidList = [q1_f, q2_f, av_f]
     fids = len(fidList)
     
     #q1_e = 0.46008
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        q1,q2,kp,kvav,av,bv = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
+        q1,q2,av = theta
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp_f, kvav=kvav_f, av=av, bv=bv_f)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
@@ -104,15 +104,14 @@ if __name__ == '__main__':
     #    max_list[num] = fid_val + var
     #    var_list[num] = var
     
-    min_list = [0,0,0,0,0,0]
-    max_list = [2,3,25,2,2,5]
+    min_list = [0,0,0]
+    max_list = [2,3,2]
     
     # Set up MLE for emcee error evaluation
     
     def lnprior(theta):
-        q1,q2,kp,kvav,av,bv = theta
-        if (min_list[0] < q1 < max_list[0] and min_list[1] < q2 < max_list[1] and min_list[2] < kp < max_list[2] 
-                and min_list[3] < kvav < max_list[3] and min_list[4] < av < max_list[4] and min_list[5] < bv < max_list[5]):
+        q1,q2,av = theta
+        if (min_list[0] < q1 < max_list[0] and min_list[1] < q2 < max_list[1] and min_list[2] < av < max_list[2]):
             return 0.0
         return -np.inf
     
@@ -134,26 +133,17 @@ if __name__ == '__main__':
             pos_11 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_12 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_13 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-            pos_14 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_15 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_16 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-            pos_1 = [[pos_11[i],pos_12[i],pos_13[i],pos_14[i],pos_15[i],pos_16[i]] for i in range(nwalkers)]
+            pos_1 = [[pos_11[i],pos_12[i],pos_13[i]] for i in range(nwalkers)]
             
             pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_23 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-            pos_24 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_25 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_26 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-            pos_2 = [[pos_21[i],pos_22[i],pos_23[i],pos_24[i],pos_25[i],pos_26[i]] for i in range(nwalkers)]
+            pos_2 = [[pos_21[i],pos_22[i],pos_23[i]] for i in range(nwalkers)]
             
             pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_32 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_33 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-            pos_34 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_35 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_36 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-            pos_3 = [[pos_31[i],pos_32[i],pos_33[i],pos_34[i],pos_34[i],pos_36[i]] for i in range(nwalkers)]
+            pos_3 = [[pos_31[i],pos_32[i],pos_33[i]] for i in range(nwalkers)]
             pos = [pos_1,pos_2,pos_3]
     else:
         if pos_method==1:
@@ -162,10 +152,7 @@ if __name__ == '__main__':
             pos_1 = np.random.uniform(min_list[0],max_list[0],nwalkers)
             pos_2 = np.random.uniform(min_list[1],max_list[1],nwalkers)
             pos_3 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-            pos_4 = np.random.uniform(min_list[3],max_list[3],nwalkers)
-            pos_5 = np.random.uniform(min_list[4],max_list[4],nwalkers)
-            pos_6 = np.random.uniform(min_list[5],max_list[5],nwalkers)
-            pos = [[pos_1[i],pos_2[i],pos_3[i],pos_4[i],pos_5[i],pos_6[i]] for i in range(nwalkers)]
+            pos = [[pos_1[i],pos_2[i],pos_3[i]] for i in range(nwalkers)]
     
     # Run emcee error evaluation
     sigma_arr = []
@@ -175,9 +162,9 @@ if __name__ == '__main__':
         backend = emcee.backends.HDFBackend(filename)
         backend.reset(nwalkers, ndim)
     
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend, pool=pool)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 100
+        max_n = nsteps
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
@@ -216,7 +203,7 @@ if __name__ == '__main__':
 
     elif multiT:
         betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=pool)
+        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)
         sampler.run_mcmc(pos, nsteps)
         chain = sampler.chain[2][:,:,:]
         probs = sampler.logprobability[2]
@@ -226,7 +213,7 @@ if __name__ == '__main__':
         print(mle_soln)
         
     else:
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, pool=pool)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)
         sampler.run_mcmc(pos, nsteps, store=True)
         chain = sampler.chain
         probs = sampler.get_log_prob()
@@ -255,21 +242,6 @@ if __name__ == '__main__':
     sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
     sigma_arr+=[sigma1_3, sigma2_3]
     
-    quantiles = np.percentile(fc[:,3], [2.28, 15.9, 50, 84.2, 97.7])
-    sigma1_4 = 0.5 * (quantiles[3] - quantiles[1])
-    sigma2_4 = 0.5 * (quantiles[4] - quantiles[0])
-    sigma_arr+=[sigma1_4, sigma2_4]
-    
-    quantiles = np.percentile(fc[:,4], [2.28, 15.9, 50, 84.2, 97.7])
-    sigma1_5 = 0.5 * (quantiles[3] - quantiles[1])
-    sigma2_5 = 0.5 * (quantiles[4] - quantiles[0])
-    sigma_arr+=[sigma1_5, sigma2_5]
-    
-    quantiles = np.percentile(fc[:,5], [2.28, 15.9, 50, 84.2, 97.7])
-    sigma1_6 = 0.5 * (quantiles[3] - quantiles[1])
-    sigma2_6 = 0.5 * (quantiles[4] - quantiles[0])
-    sigma_arr+=[sigma1_6, sigma2_6]
-    
     elapsed_time = time.process_time() - t
     
     # Write walker paths to files, along with the fitting parameters
@@ -297,6 +269,6 @@ if __name__ == '__main__':
     for w in range(nwalkers):
         file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
         for i in range(nsteps):
-            file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
-                       str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4]),str(c[w][i][5]))) 
+            file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                       str(c[w][i][2]))) 
         file.close()       
