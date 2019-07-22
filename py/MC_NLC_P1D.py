@@ -175,9 +175,9 @@ if __name__ == '__main__':
         backend = emcee.backends.HDFBackend(filename)
         backend.reset(nwalkers, ndim)
     
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend, pool=pool)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
     
-        max_n = 100
+        max_n = nsteps
     
         #sampler.run_mcmc(pos, 500)
         # We'll track how the average autocorrelation time estimate changes
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
     elif multiT:
         betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=pool)
+        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)
         sampler.run_mcmc(pos, nsteps)
         chain = sampler.chain[2][:,:,:]
         probs = sampler.logprobability[2]
@@ -226,7 +226,7 @@ if __name__ == '__main__':
         print(mle_soln)
         
     else:
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, pool=pool)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)
         sampler.run_mcmc(pos, nsteps, store=True)
         chain = sampler.chain
         probs = sampler.get_log_prob()
