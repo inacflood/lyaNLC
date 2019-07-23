@@ -105,7 +105,7 @@ if __name__ == '__main__':
     #    var_list[num] = var
     
     min_list = [0,0,0]
-    max_list = [25,2,2]
+    max_list = [25,2,5]
     
     # Set up MLE for emcee error evaluation
     
