@@ -95,8 +95,8 @@ if __name__ == '__main__':
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
-    min_list = [0.1046,0.0642,0.7956]
-    max_list = [0.4842,0.3888,1.0205]
+    min_list = [0,0,0.3140]
+    max_list = [1.2051,1.0908,1.4382]
     
     # Set up MLE for emcee error evaluation
     
