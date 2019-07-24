@@ -63,13 +63,13 @@ if __name__ == '__main__':
 
     # Make a directory to store the sampling data and parameters
     if not os.path.exists('../output/'+headFile):
-        os.makedirs('../output/'+headFile)
+        os.makedirs('../output/'+headFile,exist_ok=True)
         
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
 
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [kvav_f, av_f, bv_f]
+    fidList = [kvav_f, av_f, bv_f] #manual change line
     fids = len(fidList)
     
     #q1_e = 0.46008
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        kvav,av,bv = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav, av=av, bv=bv)*dkMz
+        kvav,av,bv = theta #manual change line
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav, av=av, bv=bv)*dkMz #manual change line
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
@@ -104,8 +104,8 @@ if __name__ == '__main__':
     #    max_list[num] = fid_val + var
     #    var_list[num] = var
     
-    min_list = [0,0,0]
-    max_list = [2,2,5]
+    min_list = [0,0,0] #manual change line
+    max_list = [2,2,5] #manual change line
     
     # Set up MLE for emcee error evaluation
     
