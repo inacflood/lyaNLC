@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [kp_f, av_f, bv_f] #manual change line
+    fidList = [kp_f, kvav_f, bv_f] #manual change line
     fids = len(fidList)
     
     #q1_e = 0.46008
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        kp,av,bv = theta #manual change line
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav_f, av=av, bv=bv)*dkMz #manual change line
+        kp,kvav,bv = theta #manual change line
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav, av=av_f, bv=bv)*dkMz #manual change line
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
