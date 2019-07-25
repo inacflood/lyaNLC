@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [q1_f, q2_f, av_f]
+    fidList = [kp_f, kvav_f, av_f] #change here
     fids = len(fidList)
     
     cosmo = cCAMB.Cosmology(z)
@@ -85,18 +85,19 @@ if __name__ == '__main__':
         chain=np.vstack([chain,data])
         
     # Get best fit values and uncertainties
-    results=np.loadtxt('../output/'+inFile+'/results.dat')
+    results=np.loadtxt('../output/'+inFile+'/corner.dat')
+    
+    min_list = [max(results[k][2],0) for k in range(ndim)]
+    max_list = [results[:,1]]
         
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        q1,q2,av = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp_f, kvav=kvav_f, av=av, bv=bv_f)*dkMz
+        kp,kvav,av = theta
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav, av=av, bv=bv_f)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
-    min_list = [0,0,0.3140]
-    max_list = [1.2051,1.0908,1.4382]
     
     # Set up MLE for emcee error evaluation
     
