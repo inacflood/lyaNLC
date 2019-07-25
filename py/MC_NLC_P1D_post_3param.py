@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     # Make a directory to store the sampling data and parameters
     if not os.path.exists('../output/'+headFile):
-        os.makedirs('../output/'+headFile)
+        os.makedirs('../output/'+headFile,exist_ok=True)
         
 #    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
     convTest = CTSwitch
