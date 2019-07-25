@@ -15,7 +15,7 @@ from schwimmbad import MPIPool
 import sys
 
 t = time.process_time()
-pooling = False
+#pooling = True
 
 if __name__ == '__main__':
     
@@ -134,132 +134,11 @@ if __name__ == '__main__':
     
     # Set up initial positions of walkers
     
-    if pooling:
-        with MPIPool() as pool:
-            if not pool.is_master():
-                pool.wait()
-                sys.exit(0)
-        
-            if multiT:
-                if pos_method==1:
-                    pos_1 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-                    pos_2 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-                    pos_3 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-                    pos = [pos_1,pos_2,pos_3]
-                else:
-                    pos_11 = np.random.uniform(min_list[0],max_list[0],nwalkers)
-                    pos_12 = np.random.uniform(min_list[1],max_list[1],nwalkers)
-                    pos_13 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-                    pos_1 = [[pos_11[i],pos_12[i],pos_13[i]] for i in range(nwalkers)]
-                    
-                    pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
-                    pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
-                    pos_23 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-                    pos_2 = [[pos_21[i],pos_22[i],pos_23[i]] for i in range(nwalkers)]
-                    
-                    pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
-                    pos_32 = np.random.uniform(min_list[1],max_list[1],nwalkers)
-                    pos_33 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-                    pos_3 = [[pos_31[i],pos_32[i],pos_33[i]] for i in range(nwalkers)]
-                    pos = [pos_1,pos_2,pos_3]
-            else:
-                if pos_method==1:
-                    pos = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-                else:
-                    pos_1 = np.random.uniform(min_list[0],max_list[0],nwalkers)
-                    pos_2 = np.random.uniform(min_list[1],max_list[1],nwalkers)
-                    pos_3 = np.random.uniform(min_list[2],max_list[2],nwalkers)
-                    pos = [[pos_1[i],pos_2[i],pos_3[i]] for i in range(nwalkers)]
-            
-            # Run emcee error evaluation
-            sigma_arr = []
-            
-            if convTest: # walker paths will be stored in backend and periodically checked for convergence
-                filename = headFile+".h5"
-                backend = emcee.backends.HDFBackend(filename)
-                backend.reset(nwalkers, ndim)
-            
-                sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)#, pool=pool)
-            
-                max_n = nsteps
-            
-                #sampler.run_mcmc(pos, 500)
-                # We'll track how the average autocorrelation time estimate changes
-                index = 0
-                autocorr = np.empty(max_n)
-            
-                old_tau = np.inf
-            
-                # Now we'll sample for up to max_n steps
-                for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
-                    # Only check convergence every 100 steps
-                    if sampler.iteration % 100:
-                        continue
-            
-                    # Compute the autocorrelation time so far
-                    # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
-                    tau = sampler.get_autocorr_time(tol=0)
-                    autocorr[index] = np.mean(tau)
-                    index += 1
-            
-                    # Check convergence
-                    converged = np.all(tau * 100 < sampler.iteration)
-                    converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
-                    if converged:
-                        break
-                    old_tau = tau
-            
-                nsteps = sampler.iteration
-                chain = sampler.chain
-                probs = sampler.get_log_prob()
-                maxprob=np.argmin(probs)
-                hp_loc = np.unravel_index(maxprob, probs.shape)
-                mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
-                print(mle_soln)
-        
-        
-            elif multiT:
-                betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-                sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)#, pool=pool)
-                sampler.run_mcmc(pos, nsteps)
-                chain = sampler.chain[2][:,:,:]
-                probs = sampler.logprobability[2]
-                maxprob=np.argmin(probs)
-                hp_loc = np.unravel_index(maxprob, probs.shape)
-                mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
-                print(mle_soln)
-                
-            else:
-                sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)#, pool=pool)
-                sampler.run_mcmc(pos, nsteps, store=True)
-                chain = sampler.chain
-                probs = sampler.get_log_prob()
-                maxprob=np.argmin(probs)
-                hp_loc = np.unravel_index(maxprob, probs.shape)
-                mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
-                print(mle_soln)
-                
-            if multiT:
-                fc = sampler.flatchain[2]
-            else:
-                fc=sampler.flatchain
-                
-            quantiles = np.percentile(fc[:,0], [2.28, 15.9, 50, 84.2, 97.7])
-            sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
-            sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
-            sigma_arr+=[sigma1_1, sigma2_1]
-            
-            quantiles = np.percentile(fc[:,1], [2.28, 15.9, 50, 84.2, 97.7])
-            sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
-            sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
-            sigma_arr+=[sigma1_2, sigma2_2]
-            
-            quantiles = np.percentile(fc[:,2], [2.28, 15.9, 50, 84.2, 97.7])
-            sigma1_3 = 0.5 * (quantiles[3] - quantiles[1])
-            sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
-            sigma_arr+=[sigma1_3, sigma2_3]
-            
-    else: #no pooling
+
+    with MPIPool() as pool:
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
         
         if multiT:
             if pos_method==1:
