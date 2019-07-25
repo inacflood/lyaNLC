@@ -15,6 +15,7 @@ from schwimmbad import MPIPool
 import sys
 
 t = time.process_time()
+pooling = False
 
 if __name__ == '__main__':
     
@@ -26,6 +27,9 @@ if __name__ == '__main__':
     
     parser.add_argument('--z',type=float,default=None,required=True,
         help='Redshift value')
+    
+    parser.add_argument('--params', nargs='+', type=int, 
+                        default=None, required=True, help='Parameters being tested')
     
     parser.add_argument('--err',type=float,default=0,required=False,
         help='Multiplicative half-width of the uniform parameter priors')
@@ -60,6 +64,7 @@ if __name__ == '__main__':
     ndim = args.ndim
     nwalkers = args.nwalkers
     nsteps = args.nsteps
+    param_opt = args.params
 
     # Make a directory to store the sampling data and parameters
     if not os.path.exists('../output/'+headFile):
@@ -68,9 +73,24 @@ if __name__ == '__main__':
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
 
     # Choose the "true" parameters.
-    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [kp_f, kvav_f, av_f] #manual change line
+    #param_opt = [1,0,1,1,0,0]
+    fiducials = getFiducialValues(z)
+    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fiducials
+    maxes = [2,3,25,2,2,5]
+    
+    fidList = [] 
+    max_list = []
+    params = []
+    for f in range(len(param_opt)):
+        if param_opt[f]:
+            fidList.append(fiducials[f])
+            max_list.append(maxes[f])
+            params.append(0)
+        else:
+            params.append(fiducials[f])
+            
     fids = len(fidList)
+    min_list = [0,0,0] 
     
     #q1_e = 0.46008
     
@@ -88,24 +108,15 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        kp,kvav,av = theta #manual change line
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav, av=av, bv=bv_f)*dkMz #manual change line
+        for f in range(len(param_opt)):
+            if not param_opt[f]:
+                params[f] = theta[0]
+                np.delete(theta,0)
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=params[0], q2=params[1], kp=params[2], 
+                                kvav=params[3], av=params[4], bv=params[5])*dkMz 
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
-    #var_list = np.zeros(fids)
-    #min_list = np.zeros(fids)
-    #max_list = np.zeros(fids)
-    #
-    #for num in range(fids):
-    #    fid_val = fidList[num]
-    #    var = np.abs(fid_val)*err
-    #    min_list[num] = fid_val - var
-    #    max_list[num] = fid_val + var
-    #    var_list[num] = var
-    
-    min_list = [0,0,0] #manual change line
-    max_list = [25,2,2] #manual change line
     
     # Set up MLE for emcee error evaluation
     
@@ -123,11 +134,133 @@ if __name__ == '__main__':
     
     # Set up initial positions of walkers
     
-    with MPIPool() as pool:
-        if not pool.is_master():
-            pool.wait()
-            sys.exit(0)
-    
+    if pooling:
+        with MPIPool() as pool:
+            if not pool.is_master():
+                pool.wait()
+                sys.exit(0)
+        
+            if multiT:
+                if pos_method==1:
+                    pos_1 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                    pos_2 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                    pos_3 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                    pos = [pos_1,pos_2,pos_3]
+                else:
+                    pos_11 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+                    pos_12 = np.random.uniform(min_list[1],max_list[1],nwalkers)
+                    pos_13 = np.random.uniform(min_list[2],max_list[2],nwalkers)
+                    pos_1 = [[pos_11[i],pos_12[i],pos_13[i]] for i in range(nwalkers)]
+                    
+                    pos_21 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+                    pos_22 = np.random.uniform(min_list[1],max_list[1],nwalkers)
+                    pos_23 = np.random.uniform(min_list[2],max_list[2],nwalkers)
+                    pos_2 = [[pos_21[i],pos_22[i],pos_23[i]] for i in range(nwalkers)]
+                    
+                    pos_31 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+                    pos_32 = np.random.uniform(min_list[1],max_list[1],nwalkers)
+                    pos_33 = np.random.uniform(min_list[2],max_list[2],nwalkers)
+                    pos_3 = [[pos_31[i],pos_32[i],pos_33[i]] for i in range(nwalkers)]
+                    pos = [pos_1,pos_2,pos_3]
+            else:
+                if pos_method==1:
+                    pos = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                else:
+                    pos_1 = np.random.uniform(min_list[0],max_list[0],nwalkers)
+                    pos_2 = np.random.uniform(min_list[1],max_list[1],nwalkers)
+                    pos_3 = np.random.uniform(min_list[2],max_list[2],nwalkers)
+                    pos = [[pos_1[i],pos_2[i],pos_3[i]] for i in range(nwalkers)]
+            
+            # Run emcee error evaluation
+            sigma_arr = []
+            
+            if convTest: # walker paths will be stored in backend and periodically checked for convergence
+                filename = headFile+".h5"
+                backend = emcee.backends.HDFBackend(filename)
+                backend.reset(nwalkers, ndim)
+            
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)#, pool=pool)
+            
+                max_n = nsteps
+            
+                #sampler.run_mcmc(pos, 500)
+                # We'll track how the average autocorrelation time estimate changes
+                index = 0
+                autocorr = np.empty(max_n)
+            
+                old_tau = np.inf
+            
+                # Now we'll sample for up to max_n steps
+                for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
+                    # Only check convergence every 100 steps
+                    if sampler.iteration % 100:
+                        continue
+            
+                    # Compute the autocorrelation time so far
+                    # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
+                    tau = sampler.get_autocorr_time(tol=0)
+                    autocorr[index] = np.mean(tau)
+                    index += 1
+            
+                    # Check convergence
+                    converged = np.all(tau * 100 < sampler.iteration)
+                    converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
+                    if converged:
+                        break
+                    old_tau = tau
+            
+                nsteps = sampler.iteration
+                chain = sampler.chain
+                probs = sampler.get_log_prob()
+                maxprob=np.argmin(probs)
+                hp_loc = np.unravel_index(maxprob, probs.shape)
+                mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+                print(mle_soln)
+        
+        
+            elif multiT:
+                betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
+                sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)#, pool=pool)
+                sampler.run_mcmc(pos, nsteps)
+                chain = sampler.chain[2][:,:,:]
+                probs = sampler.logprobability[2]
+                maxprob=np.argmin(probs)
+                hp_loc = np.unravel_index(maxprob, probs.shape)
+                mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
+                print(mle_soln)
+                
+            else:
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)#, pool=pool)
+                sampler.run_mcmc(pos, nsteps, store=True)
+                chain = sampler.chain
+                probs = sampler.get_log_prob()
+                maxprob=np.argmin(probs)
+                hp_loc = np.unravel_index(maxprob, probs.shape)
+                mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+                print(mle_soln)
+                
+            if multiT:
+                fc = sampler.flatchain[2]
+            else:
+                fc=sampler.flatchain
+                
+            quantiles = np.percentile(fc[:,0], [2.28, 15.9, 50, 84.2, 97.7])
+            sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+            sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+            sigma_arr+=[sigma1_1, sigma2_1]
+            
+            quantiles = np.percentile(fc[:,1], [2.28, 15.9, 50, 84.2, 97.7])
+            sigma1_2 = 0.5 * (quantiles[3] - quantiles[1])
+            sigma2_2 = 0.5 * (quantiles[4] - quantiles[0])
+            sigma_arr+=[sigma1_2, sigma2_2]
+            
+            quantiles = np.percentile(fc[:,2], [2.28, 15.9, 50, 84.2, 97.7])
+            sigma1_3 = 0.5 * (quantiles[3] - quantiles[1])
+            sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
+            sigma_arr+=[sigma1_3, sigma2_3]
+            
+    else: #no pooling
+        
         if multiT:
             if pos_method==1:
                 pos_1 = [fidList + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
@@ -167,7 +300,7 @@ if __name__ == '__main__':
             backend = emcee.backends.HDFBackend(filename)
             backend.reset(nwalkers, ndim)
         
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend, pool=pool)
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)#, pool=pool)
         
             max_n = nsteps
         
@@ -208,7 +341,7 @@ if __name__ == '__main__':
     
         elif multiT:
             betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-            sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas,pool=pool)
+            sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)#, pool=pool)
             sampler.run_mcmc(pos, nsteps)
             chain = sampler.chain[2][:,:,:]
             probs = sampler.logprobability[2]
@@ -218,7 +351,7 @@ if __name__ == '__main__':
             print(mle_soln)
             
         else:
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob,pool=pool)
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)#, pool=pool)
             sampler.run_mcmc(pos, nsteps, store=True)
             chain = sampler.chain
             probs = sampler.get_log_prob()
@@ -231,7 +364,7 @@ if __name__ == '__main__':
             fc = sampler.flatchain[2]
         else:
             fc=sampler.flatchain
-        
+            
         quantiles = np.percentile(fc[:,0], [2.28, 15.9, 50, 84.2, 97.7])
         sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
         sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
@@ -246,7 +379,7 @@ if __name__ == '__main__':
         sigma1_3 = 0.5 * (quantiles[3] - quantiles[1])
         sigma2_3 = 0.5 * (quantiles[4] - quantiles[0])
         sigma_arr+=[sigma1_3, sigma2_3]
-    
+        
     elapsed_time = time.process_time() - t
     
     # Write walker paths to files, along with the fitting parameters
@@ -254,6 +387,11 @@ if __name__ == '__main__':
     paramfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                     str(z),str(err),str(elapsed_time)))
     paramfile.close()
+    
+    fittofile = open('../output/'+headFile+'/fitto.dat','w')
+    fittofile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(param_opt[0]),str(param_opt[1]),str(param_opt[2]),
+                    str(param_opt[3]),str(param_opt[4]),str(param_opt[5])))
+    fittofile.close()
     
     resultsfile = open('../output/'+headFile+'/results.dat','w')
     for d in range(ndim):

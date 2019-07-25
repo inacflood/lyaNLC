@@ -56,12 +56,26 @@ if __name__ == '__main__':
     if not os.path.exists('../output/'+headFile):
         os.makedirs('../output/'+headFile,exist_ok=True)
         
-#    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
     convTest = CTSwitch
+    
+    # Retrieve the parameters being fitted and copy file to this directory
+    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
+    param_opt = [int(param) for param in param_opt]
+    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
 
     # Choose the "true" parameters.
-    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [kvav_f, av_f, bv_f] #change here
+    fiducials = getFiducialValues(z)
+    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fiducials
+    
+    fidList = [] 
+    params = []
+    for f in range(len(param_opt)):
+        if param_opt[f]:
+            fidList.append(fiducials[f])
+            params.append(0)
+        else:
+            params.append(fiducials[f])
+            
     fids = len(fidList)
     
     cosmo = cCAMB.Cosmology(z)
@@ -92,8 +106,12 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        kvav,av,bv = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp_f, kvav=kvav, av=av, bv=bv)*dkMz
+        for f in range(len(param_opt)):
+            if not param_opt[f]:
+                params[f] = theta[0]
+                np.delete(theta,0)
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=params[0], q2=params[1], kp=params[2], 
+                                kvav=params[3], av=params[4], bv=params[5])*dkMz 
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
