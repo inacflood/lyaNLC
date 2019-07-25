@@ -86,9 +86,8 @@ if __name__ == '__main__':
         
     # Get best fit values and uncertainties
     results=np.loadtxt('../output/'+inFile+'/corner.dat')
-    
     min_list = [max(results[k][2],0) for k in range(ndim)]
-    max_list = [results[:,1]]
+    max_list = results[:,1]
         
     # Maximum Likelihood Estimate fit to the synthetic data
     
@@ -102,8 +101,8 @@ if __name__ == '__main__':
     # Set up MLE for emcee error evaluation
     
     def lnprior(theta):
-        q1,q2,av = theta
-        if (min_list[0] < q1 < max_list[0] and min_list[1] < q2 < max_list[1] and min_list[2] < av < max_list[2]):
+        var1,var2,var3 = theta
+        if (min_list[0] < var1 < max_list[0] and min_list[1] < var2 < max_list[1] and min_list[2] < var3 < max_list[2]):
             return 0.0
         return -np.inf
     
