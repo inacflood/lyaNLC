@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # Choose the "true" parameters.
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [kp_f, kvav_f, av_f] #change here
+    fidList = [kp_f, av_f, bv_f] #change here
     fids = len(fidList)
     
     cosmo = cCAMB.Cosmology(z)
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        kp,kvav,av = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav, av=av, bv=bv_f)*dkMz
+        kp,av,bv = theta
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f, q2=q2_f, kp=kp, kvav=kvav_f, av=av, bv=bv)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
