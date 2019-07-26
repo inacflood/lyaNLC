@@ -53,12 +53,12 @@ if __name__ == '__main__':
     if not os.path.exists('../output/'+headFile):
         os.makedirs('../output/'+headFile,exist_ok=True)
         
-    convTest = CTSwitch
     
     # Retrieve the parameters being fitted and copy file to this directory
-    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
-    param_opt = [int(param) for param in param_opt]
-    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
+#    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
+#    param_opt = [int(param) for param in param_opt]
+#    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
+    param_opt = [0,0,1,1,1,0]
 
     # Choose the "true" parameters.
     fiducials = getFiducialValues(z)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Get best fit values and uncertainties
     results=np.loadtxt('../output/'+inFile+'/corner.dat')
     min_list = [max(results[k][2],0) for k in range(ndim)]
-    max_list = results[:,1]
+    max_list = results[20,results[1,1],3]
         
     # Maximum Likelihood Estimate fit to the synthetic data
     
@@ -148,13 +148,6 @@ if __name__ == '__main__':
         hp_loc = np.unravel_index(maxprob, probs.shape)
         mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
         print(mle_soln)
-            
-        chain = sampler.chain
-        probs = sampler.get_log_prob()
-        maxprob=np.argmin(probs)
-        hp_loc = np.unravel_index(maxprob, probs.shape)
-        mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
-        print(mle_soln)
         
         for i in range(ndim): 
             quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
@@ -189,6 +182,11 @@ if __name__ == '__main__':
             file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
                        str(c[w][i][2]))) 
         file.close()
+        
+    fittofile = open('../output/'+headFile+'/fitto.dat','w')
+    fittofile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(param_opt[0]),str(param_opt[1]),str(param_opt[2]),
+                    str(param_opt[3]),str(param_opt[4]),str(param_opt[5])))
+    fittofile.close()
         
 
         
