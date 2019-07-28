@@ -76,7 +76,7 @@ if __name__ == '__main__':
     #param_opt = [1,0,1,1,0,0]
     fiducials = getFiducialValues(z)
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fiducials
-    maxes = [2,3,25,2,2,5]
+    maxes = [2,3,20,1.55,3,3]
     
     fidList = [] 
     max_list = []
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             params.append(fiducials[f])
             
     fids = len(fidList)
-    min_list = [0,0,0] 
+    min_list = [9.8,0.34,0.83] 
     
     #q1_e = 0.46008
     
