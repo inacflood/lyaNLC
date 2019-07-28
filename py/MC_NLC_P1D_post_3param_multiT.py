@@ -36,7 +36,7 @@ if __name__ == '__main__':
     
     headFile = args.out_dir
     inFile = args.in_dir        
-    CTSwitch = args.CTSwitch
+    #CTSwitch = args.CTSwitch
     nsteps = int(args.nsteps)
     
     nwalkers, nst, ndim, z, err, runtime = np.loadtxt('../output/'+inFile+'/params.dat')
