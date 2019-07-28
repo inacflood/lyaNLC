@@ -58,7 +58,7 @@ if __name__ == '__main__':
 #    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
 #    param_opt = [int(param) for param in param_opt]
 #    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
-    param_opt = [0,0,1,1,0,1]
+    param_opt = [0,0,1,1,1,0]
 
     # Choose the "true" parameters.
     fiducials = getFiducialValues(z)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Get best fit values and uncertainties
     results=np.loadtxt('../output/'+inFile+'/corner.dat')
     min_list = [max(results[k][2],0) for k in range(ndim)]
-    max_list = results[20,results[1,1],5]
+    max_list = results[20,results[1,1],3]
         
     # Maximum Likelihood Estimate fit to the synthetic data
     
