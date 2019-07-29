@@ -127,33 +127,47 @@ if __name__ == '__main__':
             return -np.inf
         return lp + lnlike(theta)
         
-    with MPIPool() as pool:
-        if not pool.is_master():
-            pool.wait()
-            sys.exit(0)
+#    with MPIPool() as pool:
+#        if not pool.is_master():
+#            pool.wait()
+#            sys.exit(0)
     
         # Set up initial positions of walkers
-        pos = chain[:,-1,:]
-            
         
-        # Run emcee error evaluation
-        sigma_arr = []
+    def cycle_pos(index, pos_prel):
+        prel = pos_prel[index]
+        maxi = pos_prel.shape[0]
+        if lnprior(prel)==0.0:
+            return prel
+        else:
+            return cycle_pos((index+1)%maxi,pos_prel)
         
-        betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=pool)
-        sampler.run_mcmc(pos, nsteps)
-        chain = sampler.chain[2][:,:,:]
-        probs = sampler.logprobability[2]
-        maxprob=np.argmin(probs)
-        hp_loc = np.unravel_index(maxprob, probs.shape)
-        mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
-        print(mle_soln)
-        
-        for i in range(ndim): 
-            quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
-            sigma1 = 0.5 * (quantiles[3] - quantiles[1])
-            sigma2 = 0.5 * (quantiles[4] - quantiles[0])
-            sigma_arr+=[sigma1, sigma2]
+    pos_prel = chain[:,-1,:]
+    pos = np.empty((nwalkers,ndim))
+    for w in range(nwalkers):
+        pos[w]=cycle_pos(w,pos_prel)
+    pos = [pos,pos,pos]
+    #pos=chain[:,-1,:]
+
+    
+    # Run emcee error evaluation
+    sigma_arr = []
+    
+    betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
+    sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)#, pool=pool)
+    sampler.run_mcmc(pos, nsteps)
+    chain = sampler.chain[2][:,:,:]
+    probs = sampler.logprobability[2]
+    maxprob=np.argmin(probs)
+    hp_loc = np.unravel_index(maxprob, probs.shape)
+    mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
+    print(mle_soln)
+    
+    for i in range(ndim): 
+        quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1, sigma2]
 
     elapsed_time = time.process_time() - t
     
@@ -171,7 +185,7 @@ if __name__ == '__main__':
     file=open('../output/'+headFile+'/logprob.dat','w')   
     for s in range(nsteps):
         for w in range(nwalkers):
-            file.write(str(probs[s][w])+' ')
+            file.write(str(probs[w][s])+' ')
         file.write('\n')
     file.close()
     
