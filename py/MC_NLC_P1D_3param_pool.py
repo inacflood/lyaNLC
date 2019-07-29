@@ -100,9 +100,9 @@ if __name__ == '__main__':
     
     # Get actual data
     data = npd.LyA_P1D(z)
-    k = data.k[4:]
-    P = data.Pk[4:]
-    Perr = data.Pk_stat[4:]
+    k = data.k
+    P = data.Pk
+    Perr = data.Pk_stat
     k_res = k*dkMz
     
     # Maximum Likelihood Estimate fit to the synthetic data
