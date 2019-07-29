@@ -55,10 +55,10 @@ if __name__ == '__main__':
         
     
     # Retrieve the parameters being fitted and copy file to this directory
-#    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
-#    param_opt = [int(param) for param in param_opt]
-#    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
-    param_opt = [0,0,1,1,0,1]
+    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
+    param_opt = [int(param) for param in param_opt]
+    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
+
 
     # Choose the "true" parameters.
     fiducials = getFiducialValues(z)
@@ -127,33 +127,33 @@ if __name__ == '__main__':
             return -np.inf
         return lp + lnlike(theta)
         
-#    with MPIPool() as pool:
-#        if not pool.is_master():
-#            pool.wait()
-#            sys.exit(0)
+    with MPIPool() as pool:
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
     
-    # Set up initial positions of walkers
-    pos = chain[:,-1,:]
+        # Set up initial positions of walkers
+        pos = chain[:,-1,:]
+            
         
-    
-    # Run emcee error evaluation
-    sigma_arr = []
-    
-    betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-    sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas)#, pool=pool)
-    sampler.run_mcmc(pos, nsteps)
-    chain = sampler.chain[2][:,:,:]
-    probs = sampler.logprobability[2]
-    maxprob=np.argmin(probs)
-    hp_loc = np.unravel_index(maxprob, probs.shape)
-    mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
-    print(mle_soln)
-    
-    for i in range(ndim): 
-        quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1, sigma2]
+        # Run emcee error evaluation
+        sigma_arr = []
+        
+        betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
+        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=pool)
+        sampler.run_mcmc(pos, nsteps)
+        chain = sampler.chain[2][:,:,:]
+        probs = sampler.logprobability[2]
+        maxprob=np.argmin(probs)
+        hp_loc = np.unravel_index(maxprob, probs.shape)
+        mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
+        print(mle_soln)
+        
+        for i in range(ndim): 
+            quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
+            sigma1 = 0.5 * (quantiles[3] - quantiles[1])
+            sigma2 = 0.5 * (quantiles[4] - quantiles[0])
+            sigma_arr+=[sigma1, sigma2]
 
     elapsed_time = time.process_time() - t
     
