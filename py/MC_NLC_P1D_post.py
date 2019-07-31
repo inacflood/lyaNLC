@@ -11,6 +11,8 @@ import ptemcee
 from ptemcee.sampler import Sampler
 import os
 import argparse
+from schwimmbad import MPIPool
+import sys
 
 t = time.process_time()
 
@@ -25,21 +27,30 @@ if __name__ == '__main__':
     parser.add_argument('--in_dir',type=str,default=None,required=True,
         help='Input directory to get starting position from')
     
+    parser.add_argument('--pooling',type=int,default=0,required=True,
+        help='Run with MPI pooling?')
+    
 #    parser.add_argument('--multiT',default=False,action='store_true',required=False,  # will be True if included in call
 #        help='When True, MCMC will be run at 3 temperatures set in betas')            # False otherwise
     
     parser.add_argument('--CTSwitch',default=False,action='store_true',required=False, # will be True if included in call
         help='When True, and ONLY if multiT is False, emcee will run with convergence checking')  # False otherwise
+    
+    parser.add_argument('--multiT',default=False,action='store_true',required=False,  # will be True if included in call
+        help='When True, MCMC will be run at 3 temperatures set in betas')   
             
     parser.add_argument('--nsteps',type=int,default=0,required=False,
         help='Number of iterations of walkers in emcee')
+    
     
 
     args = parser.parse_args()
     
     headFile = args.out_dir
-    inFile = args.in_dir        
+    inFile = args.in_dir
+    pooling = args.pooling        
     CTSwitch = args.CTSwitch
+    multiT = args.multiT          # when True, MCMC will be run at 3 temperatures set in 'betas'
     nsteps = int(args.nsteps)
     
     nwalkers, nst, ndim, z, err, runtime = np.loadtxt('../output/'+inFile+'/params.dat')
@@ -54,14 +65,28 @@ if __name__ == '__main__':
 
     # Make a directory to store the sampling data and parameters
     if not os.path.exists('../output/'+headFile):
-        os.makedirs('../output/'+headFile)
+        os.makedirs('../output/'+headFile,exist_ok=True)
         
-#    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
     convTest = CTSwitch
+    
+    # Retrieve the parameters being fitted and copy file to this directory
+    param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
+    param_opt = [int(param) for param in param_opt]
+    os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
 
     # Choose the "true" parameters.
-    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
-    fidList = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
+    fiducials = getFiducialValues(z)
+    q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fiducials
+    
+    fidList = [] 
+    params = []
+    for f in range(len(param_opt)):
+        if param_opt[f]:
+            fidList.append(fiducials[f])
+            params.append(0)
+        else:
+            params.append(fiducials[f])
+            
     fids = len(fidList)
     
     cosmo = cCAMB.Cosmology(z)
@@ -84,23 +109,29 @@ if __name__ == '__main__':
         data=data.reshape((1,nst,ndim))
         chain=np.vstack([chain,data])
         
+    # Get best fit values and uncertainties
+    results=np.loadtxt('../output/'+inFile+'/corner.dat')
+    min_list = [max(results[k][2],0) for k in range(ndim)]
+    max_list = results[:,1]
+        
     # Maximum Likelihood Estimate fit to the synthetic data
     
     def lnlike(theta):
-        q1,q2,kp,kvav,av,bv = theta
-        model = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
+        for f in range(len(param_opt)):
+            if param_opt[f]:
+                params[f] = theta[0]
+                np.delete(theta,0)
+        model = th.FluxP1D_hMpc(z, k*dkMz, q1=params[0], q2=params[1], kp=params[2], 
+                                kvav=params[3], av=params[4], bv=params[5])*dkMz 
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
     
-    min_list = [0,0,0,0,0,0]
-    max_list = [2,3,25,2,2,5]
     
     # Set up MLE for emcee error evaluation
     
     def lnprior(theta):
-        q1,q2,kp,kvav,av,bv = theta
-        if (min_list[0] < q1 < max_list[0] and min_list[1] < q2 < max_list[1] and min_list[2] < kp < max_list[2] 
-                and min_list[3] < kvav < max_list[3] and min_list[4] < av < max_list[4] and min_list[5] < bv < max_list[5]):
+        bound_check = [min_list[i] < theta[i] < max_list[i] for i in range(ndim)]
+        if sum(bound_check)==ndim:
             return 0.0
         return -np.inf
     
@@ -115,72 +146,130 @@ if __name__ == '__main__':
     pos = chain[:,-1,:]
         
     
-    # Run emcee error evaluation
-    sigma_arr = []
-    
-    if convTest: # walker paths will be stored in backend and periodically checked for convergence
-        filename = headFile+".h5"
-        backend = emcee.backends.HDFBackend(filename)
-        backend.reset(nwalkers, ndim)
-    
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
-    
-        max_n = nsteps
-    
-        #sampler.run_mcmc(pos, 500)
-        # We'll track how the average autocorrelation time estimate changes
-        index = 0
-        autocorr = np.empty(max_n)
-    
-        old_tau = np.inf
-    
-        # Now we'll sample for up to max_n steps
-        for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
-            c = sample.coords
+    def run_emcee(p,nwalkers,nsteps,ndim,multiT,convTest,pos,lnprob):
+        
+        '''
+         Run emcee error evaluation
+         
+        '''
+        
+        if convTest: # walker paths will be stored in backend and periodically checked for convergence
+            filename = headFile+".h5"
+            backend = emcee.backends.HDFBackend(filename)
+            backend.reset(nwalkers, ndim)
+        
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend, pool=p)
+        
+            max_n = nsteps
+        
+            #sampler.run_mcmc(pos, 500)
+            # We'll track how the average autocorrelation time estimate changes
+            index = 0
+            autocorr = np.empty(max_n)
+        
+            old_tau = np.inf
+        
+            # Now we'll sample for up to max_n steps
+            for sample in sampler.sample(pos, store=True, iterations=max_n, progress=True):
+                c = sample.coords
             
-            # Write to file
-            for w in range(nwalkers):
-                file=open('../output/'+headFile+'/walk'+str(w)+'.dat','a')
-                file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][0]), str(c[w][1]), 
-                       str(c[w][2]),str(c[w][3]),str(c[w][4]),str(c[w][5]))) 
-                file.close()
-                
-            # Only check convergence every 100 steps
-            if sampler.iteration % 100:
-                continue
+                # Write to file
+                for w in range(nwalkers):
+                    file=open('../output/'+headFile+'/walk'+str(w)+'.dat','a')
+                    if ndim==3:
+                       file.write('{0} {1} {2} \n'.format(str(c[w][0]), str(c[w][1]), 
+                               str(c[w][2])))
+                    elif ndim==4:
+                        file.write('{0} {1} {2} {3} \n'.format(str(c[w][0]), str(c[w][1]), 
+                               str(c[w][2]),str(c[w][3])))
+                    elif ndim==5:
+                        file.write('{0} {1} {2} {3} {4} \n'.format(str(c[w][0]), str(c[w][1]), 
+                               str(c[w][2]),str(c[w][3]),str(c[w][4])))
+                    else:
+                        if ndim!=6:
+                            print("You are varying less than 3 parameters. Your walk files will be faulty.")
+                        file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][0]), str(c[w][1]), 
+                               str(c[w][2]),str(c[w][3]),str(c[w][4]),str(c[w][5]))) 
+                    file.close()
+                    
+                # Only check convergence every 100 steps
+                if sampler.iteration % 100:
+                    continue
+        
+                # Compute the autocorrelation time so far
+                # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
+                tau = sampler.get_autocorr_time(tol=0)
+                autocorr[index] = np.mean(tau)
+                index += 1
+        
+                # Check convergence
+                converged = np.all(tau * 100 < sampler.iteration)
+                converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
+                if converged:
+                    break
+                old_tau = tau
+        
+            nsteps = sampler.iteration
+            chain = sampler.chain
+            probs = sampler.get_log_prob()
+            maxprob=np.argmax(probs)
+            hp_loc = np.unravel_index(maxprob, probs.shape)
+            mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+            print(mle_soln)
+            return nsteps, chain, mle_soln, probs, sampler
     
-            # Compute the autocorrelation time so far
-            # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
-            tau = sampler.get_autocorr_time(tol=0)
-            autocorr[index] = np.mean(tau)
-            index += 1
     
-            # Check convergence
-            converged = np.all(tau * 100 < sampler.iteration)
-            converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
-            if converged:
-                break
-            old_tau = tau
-    
-        nsteps = sampler.iteration
+        elif multiT:
+            betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
+            sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=p)
+            sampler.run_mcmc(pos, nsteps)
+            chain = sampler.chain[2][:,:,:]
+            probs = sampler.logprobability[2]
+            maxprob = np.argmax(probs)
+            hp_loc = np.unravel_index(maxprob, probs.shape)
+            mle_soln = chain[hp_loc] #already in order (nwalkers,nsteps)
+            print(mle_soln)
+            return nsteps, chain, mle_soln, probs, sampler
+            
+        else:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, pool=p)
+            sampler.run_mcmc(pos, nsteps, store=True)
+            chain = sampler.chain
+            probs = sampler.get_log_prob()
+            maxprob=np.argmax(probs)
+            hp_loc = np.unravel_index(maxprob, probs.shape)
+            mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
+            print(mle_soln)
+            return nsteps, chain, mle_soln, probs, sampler
+        
+    if pooling:
+        
+        with MPIPool() as pool:
+            if not pool.is_master():
+                pool.wait()
+                sys.exit(0)
+            nsteps, chain, mle_soln, probs, sampler = run_emcee(pool,nwalkers,nsteps,
+                                                ndim,multiT,convTest,pos,lnprob)
         
     else:
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)
-        sampler.run_mcmc(pos, nsteps, store=True)
+        nsteps, chain, mle_soln, probs, sampler = run_emcee(None,nwalkers,nsteps,
+                                                ndim,multiT,convTest,pos,lnprob)
         
-    chain = sampler.chain
-    probs = sampler.get_log_prob()
-    maxprob=np.argmin(probs)
-    hp_loc = np.unravel_index(maxprob, probs.shape)
-    mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
-    print(mle_soln)
+    sigma_arr = []
     
-    for i in range(ndim): 
-        quantiles = np.percentile(sampler.flatchain[:,i], [2.28, 15.9, 50, 84.2, 97.7])
-        sigma1 = 0.5 * (quantiles[3] - quantiles[1])
-        sigma2 = 0.5 * (quantiles[4] - quantiles[0])
-        sigma_arr+=[sigma1, sigma2]
-
+    if multiT:
+        fc = sampler.flatchain[2]
+        
+    else:
+        fc=sampler.flatchain
+        
+    for d in range(ndim):
+        quantiles = np.percentile(fc[:,d], [2.28, 15.9, 50, 84.2, 97.7])
+        sigma1_1 = 0.5 * (quantiles[3] - quantiles[1])
+        sigma2_1 = 0.5 * (quantiles[4] - quantiles[0])
+        sigma_arr+=[sigma1_1, sigma2_1]
+    
+        
     elapsed_time = time.process_time() - t
     
     # Write walker paths to files, along with the fitting parameters
@@ -206,10 +295,22 @@ if __name__ == '__main__':
         for w in range(nwalkers):
             file=open('../output/'+headFile+'/walk'+str(w)+'.dat','w')
             for i in range(nsteps):
-                file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
-                           str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4]),str(c[w][i][5]))) 
+                if ndim==3:
+                   file.write('{0} {1} {2} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                           str(c[w][i][2])))
+                elif ndim==4:
+                    file.write('{0} {1} {2} {3} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                           str(c[w][i][2]),str(c[w][i][3])))
+                elif ndim==5:
+                    file.write('{0} {1} {2} {3} {4} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                           str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4])))
+                else:
+                    if ndim!=6:
+                        print("You are varying less than 3 parameters. Your walk files will be faulty.")
+                    file.write('{0} {1} {2} {3} {4} {5} \n'.format(str(c[w][i][0]), str(c[w][i][1]), 
+                           str(c[w][i][2]),str(c[w][i][3]),str(c[w][i][4]),str(c[w][i][5])))
             file.close()
-        
+            
 
         
         
