@@ -6,12 +6,12 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run108"
+headFile = "run94"
 chi_test = True
-saveFigs = True
+saveFigs = False
 
 nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
-beta_f=1.650
+beta_f = 1.650
 b_f = -0.134
 
 nwalkers = int(nwalkers)
@@ -23,6 +23,7 @@ err_str = str(int(err*100))
 # Retrieve the parameters that were fitted
 param_opt = np.loadtxt('../output/'+headFile+'/fitto.dat')
 param_opt = [int(param) for param in param_opt]
+#param_opt = [1,1,0,0,1,0]
 
 labels = ["q1","q2","kp","kvav","av","bv"]
 pop_count = 0
@@ -66,7 +67,7 @@ for w in range(nwalkers-2):
    chain=np.vstack([chain,data])
 
 samples = chain[:, 50:, :].reshape((-1, ndim))
-        
+
 
 # Plots to visualize emcee walker paths parameter values
 
@@ -85,7 +86,7 @@ for w in range(nwalkers):
     plt.plot([chain[w][s][1] for s in range(nsteps)])
 
 if saveFigs:
-    param2.savefig("../output/"+headFile+"/WalkerPaths"+labels[0]+".pdf")
+    param2.savefig("../output/"+headFile+"/WalkerPaths"+labels[1]+".pdf")
 param2.show()
 
 param3 = plt.figure(3)
@@ -93,7 +94,7 @@ plt.ylabel(labels[2])
 for w in range(nwalkers):
     plt.plot([chain[w][s][2] for s in range(nsteps)])
 if saveFigs:
-    param3.savefig("../output/"+headFile+"/WalkerPaths"+labels[0]+".pdf")
+    param3.savefig("../output/"+headFile+"/WalkerPaths"+labels[2]+".pdf")
 param3.show()
     
 pathView = plt.figure(7)
@@ -110,14 +111,14 @@ for var1,var2,var3 in samples[np.random.randint(len(samples), size=200)]:
     plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, q1=params[0], q2=params[1], 
                                 kp=params[2], kvav=params[3], av=params[4], 
                                 bv=params[5])*k_res/np.pi, color="b", alpha=0.1)
-       
+
 plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f,q2=q2_f,kp=kp_f,kvav=kvav_f,av=av_f,bv=bv_f)*k_res/np.pi
          , color="r", lw=2, alpha=0.8)
 plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
 plt.xlabel('k [(km/s)^-1]')
 plt.ylabel('P(k)*k/pi')
-plt.title('Parameter exploration for beta, bias')
+plt.title('Parameter exploration')
 
 if saveFigs:
     pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
@@ -151,26 +152,23 @@ resultsfile.close()
 if chi_test:
 # Get chi-squared
 
-    results = np.loadtxt('../output/'+headFile+'/results.dat')
-    var1, var2, var3 = results[:,0]
-    theta = [var1,var2,var3]
+    theta = np.array(corner_res)[:,0]
     for f in range(len(param_opt)):
-            if not param_opt[f]:
+            if param_opt[f]:
                 params[f] = theta[0]
-                theta.pop(0)
-    
+                theta=np.delete(theta,0)
+    print(params)
     chi_sum = 0
     
     for i in range(len(k)):
-        
         kval = k[i]
         Pval = P[i]
         err = Perr[i]
-        
         obs = th.FluxP1D_hMpc(z, kval*dkMz, q1=params[0], q2=params[1], 
                                 kp=params[2], kvav=params[3], av=params[4], 
                                 bv=params[5])*dkMz
         diff = Pval-obs
+        print(diff)
         #print(kval, (diff/err)**2)
         chi_sum += (diff/err)**2
     
