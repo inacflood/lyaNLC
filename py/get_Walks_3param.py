@@ -157,7 +157,7 @@ if chi_test:
             if param_opt[f]:
                 params[f] = theta[0]
                 theta=np.delete(theta,0)
-    print(params)
+    #print(params)
     chi_sum = 0
     
     for i in range(len(k)):
@@ -168,7 +168,7 @@ if chi_test:
                                 kp=params[2], kvav=params[3], av=params[4], 
                                 bv=params[5])*dkMz
         diff = Pval-obs
-        print(diff)
+        #print(diff)
         #print(kval, (diff/err)**2)
         chi_sum += (diff/err)**2
     
