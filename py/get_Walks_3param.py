@@ -6,9 +6,9 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run94"
+headFile = "run123"
 chi_test = True
-saveFigs = False
+saveFigs = True
 
 nwalkers, nsteps, ndim, z, err, runtime = np.loadtxt('../output/'+headFile+'/params.dat')
 beta_f = 1.650
