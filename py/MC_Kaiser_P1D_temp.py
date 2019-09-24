@@ -11,6 +11,8 @@ import ptemcee
 from ptemcee.sampler import Sampler
 import os
 import argparse
+from schwimmbad import MPIPool
+import sys
 
 t = time.process_time()
 
@@ -31,11 +33,11 @@ if __name__ == '__main__':
     parser.add_argument('--pos_method',type=int,choices=[1,2],default=2,required=True,
         help='Emcee starts 1:from a small ball, 2:in full param space')
     
-    parser.add_argument('--multiT',type=bool,default=False,required=True,
-        help='When True, MCMC will be run at 3 temperatures set in betas')
+    parser.add_argument('--multiT',default=False, action='store_true',required=False,  # will be True if included in call
+        help='When True, MCMC will be run at 3 temperatures set in betas')            # False otherwise
     
-    parser.add_argument('--CTSwitch',type=bool,default=False,required=False,
-        help='When True, and ONLY if multiT is False, emcee will run with convergence checking')
+    parser.add_argument('--CTSwitch',default=False, action='store_true',required=False, # will be True if included in call
+        help='When True, and ONLY if multiT is False, emcee will run with convergence checking')  # False otherwise
     
     parser.add_argument('--linear',type=int,default=0,choices=[0,1],required=True,
         help='1D power spectrum is derived from 3D power spectrum (0) with (1) w/out NLC')
@@ -67,6 +69,9 @@ if __name__ == '__main__':
         os.makedirs('../output/'+headFile)
         
     convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
+    print("MultiT:",multiT)
+    print("CTSwitch:",CTSwitch)
+    print("convTest:",convTest)
     
     beta_f = 1.650
     b_f = -0.134
@@ -85,7 +90,7 @@ if __name__ == '__main__':
     
     # Maximum Likelihood Estimate fit to the synthetic data
     
-    def lnlike(theta, k, P, Perr):
+    def lnlike(theta):
         b, beta = theta
         model = th.FluxP1D_hMpc(z, k*dkMz, b_lya=b, beta_lya=beta, linear=linear)*dkMz
         inv_sigma2 = 1.0/(Perr**2)
@@ -107,87 +112,101 @@ if __name__ == '__main__':
             return 0.0
         return -np.inf
     
-    def lnprob(theta, k, P, Perr):
+    def lnprob(theta):
         lp = lnprior(theta)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + lnlike(theta, k, P, Perr)
+        return lp + lnlike(theta)
     
-    # Set up initial positions of walkers
-    if multiT:
-        if pos_method==1:
-            pos_1 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-            pos_2 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-            pos_3 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-            pos = [pos_1,pos_2,pos_3]
+    with MPIPool() as pool:
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
+    
+        # Set up initial positions of walkers
+        if multiT:
+            if pos_method==1:
+                pos_1 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                pos_2 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                pos_3 = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+                pos = [pos_1,pos_2,pos_3]
+            else:
+                pos_1_1 = np.random.uniform(min_b,max_b,nwalkers)
+                pos_1_2 = np.random.uniform(min_beta,max_beta,nwalkers)
+                pos_1 = [[pos_1_1[i],pos_1_2[i]] for i in range(nwalkers)]
+                pos_2_1 = np.random.uniform(min_b,max_b,nwalkers)
+                pos_2_2 = np.random.uniform(min_beta,max_beta,nwalkers)
+                pos_2 = [[pos_2_1[i],pos_2_2[i]] for i in range(nwalkers)]
+                pos_3_1 = np.random.uniform(min_b,max_b,nwalkers)
+                pos_3_2 = np.random.uniform(min_beta,max_beta,nwalkers)
+                pos_3 = [[pos_3_1[i],pos_3_2[i]] for i in range(nwalkers)]
+                pos = [pos_1,pos_2,pos_3]
         else:
-            pos_1_1 = np.random.uniform(min_b,max_b,nwalkers)
-            pos_1_2 = np.random.uniform(min_beta,max_beta,nwalkers)
-            pos_1 = [[pos_1_1[i],pos_1_2[i]] for i in range(nwalkers)]
-            pos_2_1 = np.random.uniform(min_b,max_b,nwalkers)
-            pos_2_2 = np.random.uniform(min_beta,max_beta,nwalkers)
-            pos_2 = [[pos_2_1[i],pos_2_2[i]] for i in range(nwalkers)]
-            pos_3_1 = np.random.uniform(min_b,max_b,nwalkers)
-            pos_3_2 = np.random.uniform(min_beta,max_beta,nwalkers)
-            pos_3 = [[pos_3_1[i],pos_3_2[i]] for i in range(nwalkers)]
-            pos = [pos_1,pos_2,pos_3]
-    else:
-        if pos_method==1:
-            pos = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+            if pos_method==1:
+                pos = [[b_f,beta_f] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+            else:
+                pos_1 = np.random.uniform(min_b,max_b,nwalkers)
+                pos_2 = np.random.uniform(min_beta,max_beta,nwalkers)
+                pos = [[pos_1[i],pos_2[i]] for i in range(nwalkers)]
+        
+        # Run emcee error evaluation
+        
+        if convTest: # walker paths will be stored in backend and periodically checked for convergence
+            filename = "test2.h5"
+            backend = emcee.backends.HDFBackend(filename)
+            backend.reset(nwalkers, ndim)
+        
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, backend=backend)
+        
+            max_n = 10000
+        
+            # We'll track how the average autocorrelation time estimate changes
+            index = 0
+            autocorr = np.empty(max_n)
+        
+            old_tau = np.inf
+        
+            # Now we'll sample for up to max_n steps
+            for sample in sampler.sample(pos, iterations=max_n, progress=True):
+                # Only check convergence every 100 steps
+                if sampler.iteration % 100:
+                    continue
+        
+                # Compute the autocorrelation time so far
+                # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
+                tau = sampler.get_autocorr_time(tol=0)
+                autocorr[index] = np.mean(tau)
+                index += 1
+        
+                # Check convergence
+                converged = np.all(tau * 100 < sampler.iteration)
+                converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
+                if converged:
+                    break
+                old_tau = tau
+        
+            nsteps = sampler.iteration
+            chain = sampler.chain
+            probs = sampler.get_log_prob()
+            maxprob=np.argmin(probs)
+            hp_loc = np.unravel_index(maxprob, probs.shape)
+            mle_soln = chain[(hp_loc[1],hp_loc[0])]
+            print(mle_soln)
+            
+        elif multiT:
+            betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
+            sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas,threads=3)
+            sampler.run_mcmc(pos, nsteps)
+            chain = sampler.chain[2][:,:,:]
         else:
-            pos_1 = np.random.uniform(min_b,max_b,nwalkers)
-            pos_2 = np.random.uniform(min_beta,max_beta,nwalkers)
-            pos = [[pos_1[i],pos_2[i]] for i in range(nwalkers)]
-    
-    # Run emcee error evaluation
-    
-    if convTest: # walker paths will be stored in backend and periodically checked for convergence
-        filename = "test2.h5"
-        backend = emcee.backends.HDFBackend(filename)
-        backend.reset(nwalkers, ndim)
-    
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr), backend=backend)
-    
-        max_n = 10000
-    
-        # We'll track how the average autocorrelation time estimate changes
-        index = 0
-        autocorr = np.empty(max_n)
-    
-        old_tau = np.inf
-    
-        # Now we'll sample for up to max_n steps
-        for sample in sampler.sample(pos, iterations=max_n, progress=True):
-            # Only check convergence every 100 steps
-            if sampler.iteration % 100:
-                continue
-    
-            # Compute the autocorrelation time so far
-            # Using tol=0 means that we'll always get an estimate even if it isn't trustworthy
-            tau = sampler.get_autocorr_time(tol=0)
-            autocorr[index] = np.mean(tau)
-            index += 1
-    
-            # Check convergence
-            converged = np.all(tau * 100 < sampler.iteration)
-            converged &= np.all(np.abs(old_tau - tau) / tau < 0.01)
-            if converged:
-                break
-            old_tau = tau
-    
-        nsteps = sampler.iteration
-        chain = sampler.chain
-        
-    elif multiT:
-        betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
-        sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, loglargs=(k, P, Perr), betas=betas,threads=3)
-        sampler.run_mcmc(pos, nsteps)
-        chain = sampler.chain[2][:,:,:]
-        
-    else:
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(k, P, Perr))
-        sampler.run_mcmc(pos, nsteps)
-        chain = sampler.chain
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob)
+            sampler.run_mcmc(pos, nsteps)
+            chain = sampler.chain
+            probs = sampler.get_log_prob()
+            maxprob=np.argmin(probs)
+            hp_loc = np.unravel_index(maxprob, probs.shape)
+            mle_soln = chain[(hp_loc[1],hp_loc[0])]
+            print(mle_soln)
     
     elapsed_time = time.process_time() - t
     

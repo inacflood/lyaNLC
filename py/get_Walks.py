@@ -6,7 +6,7 @@ import cosmoCAMB as cCAMB
 import theoryLya as tLyA
 import get_npd_p1d as npd
 
-headFile = "run36"
+headFile = "run91"
 saveFigs = True
 testingBB = False
 P3D = False
@@ -122,7 +122,7 @@ else:
     for w in range(nwalkers):
         plt.plot([chain[w][s][3] for s in range(nsteps)])
     if saveFigs:
-        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskvav_err"+err_str+".pdf")
+        param4.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathskvav_err"+err_str+".pdf")
     param3.show()
     
     param5 = plt.figure(5)
@@ -130,16 +130,16 @@ else:
     for w in range(nwalkers):
         plt.plot([chain[w][s][4] for s in range(nsteps)])
     if saveFigs:
-        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsav_err"+err_str+".pdf")
-    param3.show()
+        param5.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsav_err"+err_str+".pdf")
+    param5.show()
     
     param6 = plt.figure(6)
     plt.ylabel('bv')
     for w in range(nwalkers):
         plt.plot([chain[w][s][5] for s in range(nsteps)])
     if saveFigs:
-        param3.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
-    param3.show()
+        param6.savefig("../output/"+headFile+"/z"+z_str+"WalkerPathsbv_err"+err_str+".pdf")
+    param6.show()
     
 if testingBB and (not P3D):
     pathView = plt.figure(4)
@@ -158,20 +158,23 @@ if testingBB and (not P3D):
 if not testingBB:
     
     pathView = plt.figure(7)
+    plt.yscale('log')
+    plt.ylim((10**(-5),100))
     
     for q1,q2,kp,kvav,av,bv in samples[np.random.randint(len(samples), size=200)]:
         plt.plot(k, th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*k_res/np.pi
                  , color="b", alpha=0.1)
+           
     plt.plot(k,th.FluxP1D_hMpc(z, k*dkMz, q1=q1_f,q2=q2_f,kp=kp_f,kvav=kvav_f,av=av_f,bv=bv_f)*k_res/np.pi
              , color="r", lw=2, alpha=0.8)
     plt.errorbar(k, P*k/np.pi, yerr=Perr*k/np.pi, fmt=".k")
 
-    plt.yscale('log')
     plt.xlabel('k [(km/s)^-1]')
     plt.ylabel('P(k)*k/pi')
     plt.title('Parameter exploration for beta, bias')
     
     pathView.savefig("../output/"+headFile+"/SamplePaths_err"+err_str+"posSMmtF.pdf")
+#    pathView.savefig("../output/"+headFile+"/finalPosCheck.pdf")
     pathView.show()
     
 
@@ -195,7 +198,7 @@ if testingBB:
 else:
     
    cornerplt = corner.corner(samples, labels=[ "$q1$", "$q2$", "$kp$", "$kvav$", "$av$", "$bv$"],
-                truths=[kp_f,kvav_f,av_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
+                truths=[q1_f,q2_f,kp_f,kvav_f,av_f,bv_f],quantiles=[0.16, 0.5, 0.84],show_titles=True)
    
    cornerplt.savefig("../output/"+headFile+"/triangle_err"+err_str+"posFSmtT.pdf")
    cornerplt.show()
