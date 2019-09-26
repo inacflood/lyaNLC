@@ -15,3 +15,10 @@ py/__pycache__/lya_biases.cpython-37.pyc
 py/__pycache__/theoryLya.cpython-37.pyc
 py/run18.h5
 *.h5
+py/get_Walks_3param_temp.py
+py/Fischer.py
+*.dat
+*.pdf
+*.pdf
+*.pdf
+*.pdf
