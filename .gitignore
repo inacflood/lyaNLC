@@ -69,3 +69,4 @@ output/run95/triangle_err50posFSmtT.pdf
 output/run95/z24WalkerPathsav_err50.pdf
 output/run95/z24WalkerPathsq1_err50.pdf
 output/run95/z24WalkerPathsq2_err50.pdf
+py/curvefit_NLC_P1D_play.py

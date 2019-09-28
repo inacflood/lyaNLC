@@ -51,6 +51,7 @@ def getFiducialValues(z):
     return q1, q2, kp, kvav, av, bv
     
 #def getFiducialValues(z):
+    """Fiducial values for q2=0"""
 #    q1, q2, kvav, kp, av, bv = np.zeros(6)
 #    if z==2.2:
 #        q1, kp, kvav, av, bv = [0.677, 13.3, 0.961, 0.533, 1.54]
