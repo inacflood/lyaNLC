@@ -4,6 +4,7 @@ import camb
 from camb import model, initialpower
 
 class Cosmology(object):
+    
     """
         Computes cosmological functions using CAMB.
 
@@ -11,11 +12,13 @@ class Cosmology(object):
     """
 
     def __init__(self,pk_zref=None):
+        
         """
             Setup cosmological model. 
 
             If pk_zref is set, it will compute linear power at z=pk_zref.
         """
+        
         self.pars = camb.CAMBparams()
         ob = 0.02214
         om = 0.1414
@@ -37,7 +40,9 @@ class Cosmology(object):
         self.lya_A = 1215.67 #Angstrom
 
     def LinPk_hMpc(self,kmin=1.e-4,kmax=1.e1,npoints=1000):
+        
         """Return linear power interpolator in units of h/Mpc, at zref"""
+        
         if self.pk_zref:
             kh,_,pk = self.results.get_matter_power_spectrum(minkh=kmin,
                                                     maxkh=kmax,npoints=npoints)

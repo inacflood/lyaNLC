@@ -30,9 +30,6 @@ if __name__ == '__main__':
     parser.add_argument('--pooling',type=int,default=0,required=True,
         help='Run with MPI pooling?')
     
-#    parser.add_argument('--multiT',default=False,action='store_true',required=False,  # will be True if included in call
-#        help='When True, MCMC will be run at 3 temperatures set in betas')            # False otherwise
-    
     parser.add_argument('--CTSwitch',default=False,action='store_true',required=False, # will be True if included in call
         help='When True, and ONLY if multiT is False, emcee will run with convergence checking')  # False otherwise
     
@@ -42,19 +39,24 @@ if __name__ == '__main__':
     parser.add_argument('--nsteps',type=int,default=0,required=False,
         help='Number of iterations of walkers in emcee')
     
-    
 
     args = parser.parse_args()
+    
+    ###################################################
+    ## Set up parameters and model for emcee fitting ##
+    ###################################################
     
     headFile = args.out_dir
     inFile = args.in_dir
     pooling = args.pooling        
     CTSwitch = args.CTSwitch
-    multiT = args.multiT          # when True, MCMC will be run at 3 temperatures set in 'betas'
+    multiT = args.multiT          
     nsteps = int(args.nsteps)
     
+    # Retrieve parameters from previous emcee fitting to be extended
     nwalkers, nst, ndim, z, err, runtime = np.loadtxt('../output/'+inFile+'/params.dat')
-    beta_f=1.650
+    
+    beta_f = 1.650
     b_f = -0.134
     
     nwalkers = int(nwalkers)
@@ -67,19 +69,20 @@ if __name__ == '__main__':
     if not os.path.exists('../output/'+headFile):
         os.makedirs('../output/'+headFile,exist_ok=True)
         
-    convTest = CTSwitch
+    convTest = (not multiT) and CTSwitch # convergence test cannot be run with multiTempering
     
     # Retrieve the parameters being fitted and copy file to this directory
     param_opt = np.loadtxt('../output/'+inFile+'/fitto.dat')
     param_opt = [int(param) for param in param_opt]
     os.system('cp ../output/'+inFile+'/fitto.dat ../output/'+headFile+'/fitto.dat')
 
-    # Choose the "true" parameters.
+    # Set the fiducial parameters and the uniform prior bounds (with min_list, max_list)
     fiducials = getFiducialValues(z)
     q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = fiducials
     
-    fidList = [] 
-    params = []
+    fidList = [] #list of the fiducial values for the parameters being varied
+    params = [] #list with the fiducial values for the fixed parameters and 0s 
+                #in the positions of the parameters being varied
     for f in range(len(param_opt)):
         if param_opt[f]:
             fidList.append(fiducials[f])
@@ -89,11 +92,12 @@ if __name__ == '__main__':
             
     fids = len(fidList)
     
+    # Set up the 1D power spectrum model
     cosmo = cCAMB.Cosmology(z)
     th = tLyA.TheoryLya(cosmo)
     dkMz = th.cosmo.dkms_dhMpc(z)
     
-    # Get actual data
+    # Retrieve data for 1D power spectrum
     data = npd.LyA_P1D(z)
     k = data.k
     P = data.Pk
@@ -110,11 +114,19 @@ if __name__ == '__main__':
         chain=np.vstack([chain,data])
         
     # Get best fit values and uncertainties
-    results=np.loadtxt('../output/'+inFile+'/corner.dat')
+    samples = chain[:, 50:, :].reshape((-1, ndim))
+    v1, v2, v3 = map(lambda v: (v[1], v[2], v[0]),
+                        zip(*np.percentile(samples, [16, 50, 84],
+                                            axis=0)))
+    results = np.array([v1, v2, v3])
     min_list = [max(results[k][2],0) for k in range(ndim)]
     max_list = results[:,1]
+    
+    ########################################################
+    ## Set up MLE and initial positions for emcee walkers ##
+    ########################################################
         
-    # Maximum Likelihood Estimate fit to the synthetic data
+    # Set up log likelihood function for emcee
     
     def lnlike(theta):
         for f in range(len(param_opt)):
@@ -125,9 +137,6 @@ if __name__ == '__main__':
                                 kvav=params[3], av=params[4], bv=params[5])*dkMz 
         inv_sigma2 = 1.0/(Perr**2)
         return -0.5*(np.sum((P-model)**2*inv_sigma2))
-    
-    
-    # Set up MLE for emcee error evaluation
     
     def lnprior(theta):
         bound_check = [min_list[i] < theta[i] < max_list[i] for i in range(ndim)]
@@ -143,15 +152,28 @@ if __name__ == '__main__':
     
     
     # Set up initial positions of walkers
-    pos = chain[:,-1,:]
-        
+    pos = chain[:,-1,:] 
+    
+    ##########################
+    ## Function to run MCMC ##
+    ##########################
     
     def run_emcee(p,nwalkers,nsteps,ndim,multiT,convTest,pos,lnprob):
         
-        '''
-         Run emcee error evaluation
-         
-        '''
+        """
+         Run MCMC with:
+             Number of walkers = nwalkers
+             Number of dimensions = ndim
+             Number of steps = nsteps
+             Log probability function = lnprob
+             Pool = p
+             Initial walker positions = pos
+             
+        If multiT is true, MCMC will be run at 3 different temperatures (inverses 
+        given by betas). If convTest is true, MCMC will either run until 
+        convergence or for nsteps steps, whichever happens first.
+        
+        """
         
         if convTest: # walker paths will be stored in backend and periodically checked for convergence
             filename = headFile+".h5"
@@ -210,6 +232,7 @@ if __name__ == '__main__':
                 old_tau = tau
         
             nsteps = sampler.iteration
+            # find mle_soln, the walker position with the maximum probability
             chain = sampler.chain
             probs = sampler.get_log_prob()
             maxprob=np.argmax(probs)
@@ -223,6 +246,7 @@ if __name__ == '__main__':
             betas = np.asarray([0.01, 0.505, 1.0]) #inverse temperatures for log-likelihood
             sampler = ptemcee.Sampler(nwalkers, ndim, lnprob, lnprior, betas=betas, pool=p)
             sampler.run_mcmc(pos, nsteps)
+            # find mle_soln, the walker position with the maximum probability
             chain = sampler.chain[2][:,:,:]
             probs = sampler.logprobability[2]
             maxprob = np.argmax(probs)
@@ -234,6 +258,7 @@ if __name__ == '__main__':
         else:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, pool=p)
             sampler.run_mcmc(pos, nsteps, store=True)
+            # find mle_soln, the walker position with the maximum probability
             chain = sampler.chain
             probs = sampler.get_log_prob()
             maxprob=np.argmax(probs)
@@ -241,6 +266,10 @@ if __name__ == '__main__':
             mle_soln = chain[(hp_loc[1],hp_loc[0])] #switching from order (nsteps,nwalkers) to (nwalkers,nsteps)
             print(mle_soln)
             return nsteps, chain, mle_soln, probs, sampler
+        
+    ##############
+    ## Run MCMC ##
+    ##############
         
     if pooling:
         
@@ -255,6 +284,7 @@ if __name__ == '__main__':
         nsteps, chain, mle_soln, probs, sampler = run_emcee(None,nwalkers,nsteps,
                                                 ndim,multiT,convTest,pos,lnprob)
         
+    # Retrieve flatchain and sigma values from fitting
     sigma_arr = []
     
     if multiT:
@@ -272,7 +302,10 @@ if __name__ == '__main__':
         
     elapsed_time = time.process_time() - t
     
-    # Write walker paths to files, along with the fitting parameters
+    ############################
+    ## Write results to files ##
+    ############################
+    
     paramfile = open('../output/'+headFile+'/params.dat','w')
     paramfile.write('{0} {1} {2} {3} {4} {5}\n'.format(str(nwalkers),str(nsteps),str(ndim),
                     str(z),str(err),str(elapsed_time)))

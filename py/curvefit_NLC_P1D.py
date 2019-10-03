@@ -15,12 +15,17 @@ import scipy.optimize as op
 import os
 import matplotlib.pyplot as plt
 
-z = 2.4
-headFile = "run89"
+z = 2.4 #redshift value 
+headFile = "run89" #subfolder of "output" to write fitting results to
 
+# make the output folder if it does not already exist
 if not os.path.exists('../output/'+headFile):
     os.makedirs('../output/'+headFile)
     
+
+######################################################################
+## Define fiducial parameter values and the 1D power spectrum model ##
+######################################################################
 
 q1_f, q2_f, kp_f, kvav_f, av_f, bv_f = getFiducialValues(z)
 p0 = [q1_f, q2_f, kp_f, kvav_f, av_f, bv_f]
@@ -40,6 +45,10 @@ def model(k, q1, q2, kp, kvav, av, bv):
     m = th.FluxP1D_hMpc(z, k*dkMz, q1=q1, q2=q2, kp=kp, kvav=kvav, av=av, bv=bv)*dkMz
     return m
 
+###############################
+## Perform the curve fitting ##
+###############################
+    
 min_list = [0,0,0,0,0,0]
 max_list = [2,3,25,2,2,5]
 
@@ -49,6 +58,10 @@ print("Fit values:", popt)
 print("Uncertainties:",np.sqrt(pcov[0][0]),np.sqrt(pcov[1][1]),
       np.sqrt(pcov[2][2]),np.sqrt(pcov[3][3]),np.sqrt(pcov[4][4]),np.sqrt(pcov[5][5]))
 print("Covariance:", pcov)
+
+###########################################
+## Write fitting results to output files ##
+###########################################
 
 valuesfile = open('../output/'+headFile+'/values.dat','w')
 valuesfile.write('{0} {1} {2} {3} {4} \n'.format(str(popt[0]),str(popt[1]),
