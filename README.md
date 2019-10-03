@@ -19,15 +19,8 @@ This code requires that the python libraries camb (https://camb.readthedocs.io/e
 Code for model fitting and analysis, along with code to produce relevant figures, is found in the py folder. The data we use is found in the NPD2013_data folder. Relevant figures, all of which can be produced using the code in py, are found in the Figures folder.
 
 There are 4 primary methods included in this library:
-* 
-* curvefit_NLC_P1D provides a method to do a quick fit of the model to the data using the scipy curve_fit function. Alter redshift z and the output file name directly in the code. 
+* MC_NLC_P1D performs MCMC fitting for a specified redshift. Examples of usage given below.
+* MC_NLC_P1D_post continues MCMC fitting from the endpoint of a previous run of MCMC fitting. Can be used to start fitting with one method and switch part-way through. Examples of usage given below.
+* get_Walks_NLC takes the results of MCMC fitting from the previous files and outputs tools to analyze the results, includng a corner plot, plots of the walker paths, a sampling of final walker positions, best fit parameter results and the chi-sq per dof for the results. Alter the MCMC results to be used directly in the code.
+* curvefit_NLC_P1D does a quick fit of the model to the data using the scipy curve_fit function. Alter redshift z and the output file name directly in the code. 
 
-### Examples
-
-Below I give some examples for running the MCMC fitting procedures:
-* No parallel tempering, no convergence testing:
-    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500
-* Parallel tempering, no convergence testing
-    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --multiT
-* No parallel tempering, convergence testing
-    python MC_NLC_P1D.py --z 2.4 --err 0.5 --out_dir "run21" --pos_method 2 --ndim 5 --nwalkers 200 --nsteps 500 --CTSwitch
