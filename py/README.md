@@ -1,7 +1,7 @@
 # py
 
 ## Algorithm Flow
-![codeflow](https://github.com/SGontcho/NLC_Ina/Figures/NLC_codemap.pdf)
+![codeflow](/Figures/NLC_codemap.pdf)
 
 
 Below I give some examples for running the MCMC fitting procedures using the command line:
