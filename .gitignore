@@ -21,3 +21,4 @@ py/Fischer.py
 *.pdf
 !Figures/NLC_codemap.pdf
 py/curvefit_NLC_P1D_play.py
+py/cosmoCAMB_wnu.py
