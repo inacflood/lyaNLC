@@ -18,8 +18,8 @@ py/run18.h5
 py/get_Walks_3param_temp.py
 py/Fischer.py
 *.dat
-!output/run95/*
 *.pdf
+!output/run95/*
 !Figures/NLC_codemap.pdf
 py/curvefit_NLC_P1D_play.py
 py/cosmoCAMB_wnu.py
