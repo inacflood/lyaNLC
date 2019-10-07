@@ -1,7 +1,7 @@
 # py
 
 ## Algorithm Flow
-![codeflow](/Figures/NLC_codemap.pdf)
+![codeflow](/Figures/codemap.jpeg)
 
 
 Below I give some examples for running the MCMC fitting procedures using the command line:
