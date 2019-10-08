@@ -1,7 +1,7 @@
 # NonLinearLya
 Project led by Ina Flood under the supervision of Satya Gontcho A Gontcho, on testing the robustness of current parametrization of the effect of non linearities on the power spectrum of the Lyman alpha forest
 
-We test the robustness of the Lya power spectrum from Andreu Arinyo-i-Prats et al. (2015) using data for the 1D power from Palanque-Delabrouille et al. (2013), fitting the model to the data. Fitting is done using the Markov Chain Monte Carlo (MCMC) method, specifically using the emcee and ptemcee libraries.
+We test the robustness of the Lya power spectrum model from Andreu Arinyo-i-Prats et al. (2015) using data for the 1D power from Palanque-Delabrouille et al. (2013), fitting the model to the data. Fitting is done using the Markov Chain Monte Carlo (MCMC) method, specifically using the emcee and ptemcee libraries.
 
 ## References
 * This code library is adapted from Andreu Font-Ribera’s work: https://github.com/igmhub/lyaforecast
